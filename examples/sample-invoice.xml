@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Faktura xmlns="http://crd.gov.pl/wzor/2023/06/29/12648/" xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/09/05/eD/DefinicjeTypy/">
+  <Naglowek>
+    <KodFormularza kodSystemowy="FA(3)" kodPodatku="VAT" rodzajVat="GT" wersjaSchemy="1-0E">FA</KodFormularza>
+    <WariantFormularza>3</WariantFormularza>
+    <CelZlozenia poz="P_7">1</CelZlozenia>
+    <DataWytworzeniaJPK>2024-01-15T10:30:00Z</DataWytworzeniaJPK>
+    <DataOd>2024-01-01</DataOd>
+    <DataDo>2024-01-31</DataDo>
+    <NazwaSystemu>System KSeF Test</NazwaSystemu>
+  </Naglowek>
+  
+  <Podmiot1>
+    <DaneIdentyfikacyjne>
+      <NIP>1234567890</NIP>
+      <PelnaNazwa>Test Company Sp. z o.o.</PelnaNazwa>
+    </DaneIdentyfikacyjne>
+    <Adres>
+      <KodKraju>PL</KodKraju>
+      <Wojewodztwo>mazowieckie</Wojewodztwo>
+      <Powiat>warszawski</Powiat>
+      <Gmina>Warszawa</Gmina>
+      <Ulica>ul. Testowa</Ulica>
+      <NrDomu>1</NrDomu>
+      <KodPocztowy>00-001</KodPocztowy>
+      <Poczta>Warszawa</Poczta>
+    </Adres>
+  </Podmiot1>
+  
+  <Faktura typ="G">
+    <P_1>2024-01-15</P_1>
+    <P_2A>FV/2024/001</P_2A>
+    <P_3A>
+      <NIP>9876543210</NIP>
+      <Nazwa>Customer Company Ltd.</Nazwa>
+      <Adres>
+        <KodKraju>PL</KodKraju>
+        <Wojewodztwo>slaskie</Wojewodztwo>
+        <Powiat>katowicki</Powiat>
+        <Gmina>Katowice</Gmina>
+        <Ulica>ul. Klienta</Ulica>
+        <NrDomu>10</NrDomu>
+        <KodPocztowy>40-001</KodPocztowy>
+        <Poczta>Katowice</Poczta>
+      </Adres>
+    </P_3A>
+    <P_6>2024-01-15</P_6>
+    <P_13_1>1000.00</P_13_1>
+    <P_14_1>230.00</P_14_1>
+    <P_15>1230.00</P_15>
+    
+    <Fa>
+      <FaWiersz>
+        <NrWierszaFa>1</NrWierszaFa>
+        <P_7>Usługi programistyczne</P_7>
+        <P_8A>szt</P_8A>
+        <P_8B>10</P_8B>
+        <P_9A>100.00</P_9A>
+        <P_11>1000.00</P_11>
+        <P_12>23</P_12>
+      </FaWiersz>
+    </Fa>
+    
+    <Stopka>
+      <P_16>false</P_16>
+      <P_17>false</P_17>
+      <P_18>false</P_18>
+      <P_18A>false</P_18A>
+      <P_19>false</P_19>
+      <P_20>false</P_20>
+      <P_21>false</P_21>
+      <P_22>false</P_22>
+      <P_23>false</P_23>
+      <P_106E_2>false</P_106E_2>
+      <P_106E_3>false</P_106E_3>
+      <RodzajFaktury>VAT</RodzajFaktury>
+    </Stopka>
+  </Faktura>
+</Faktura> 
