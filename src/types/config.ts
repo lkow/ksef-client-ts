@@ -4,6 +4,7 @@
 
 import type { AuthCredentials } from './auth.js';
 import type { KsefEnvironmentConfig, ContextIdentifier } from './common.js';
+import type { RateLimitConfig } from './limits.js';
 
 export interface KsefClientConfig {
   /** KSeF environment configuration */
@@ -60,6 +61,9 @@ export interface HttpClientOptions {
   
   /** Custom User-Agent string */
   userAgent?: string;
+  
+  /** Rate limiting configuration */
+  rateLimitConfig?: RateLimitConfig;
 }
 
 export interface SessionOptions {

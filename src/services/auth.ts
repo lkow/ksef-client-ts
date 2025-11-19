@@ -311,4 +311,125 @@ export class AuthenticationService {
     }
   }
 
+  /**
+   * Generate a new authorization token
+   * This creates a reusable token that can be used for session initiation
+   */
+  async generateToken(
+    credentials: CertificateCredentials,
+    contextIdentifier: ContextIdentifier,
+    description?: string
+  ): Promise<GenerateTokenResponse> {
+    this.logger.debug('Generating new authorization token');
+
+    // Parse and validate certificate
+    const parsedCert = parseCertificate(credentials);
+    const validation = validateCertificate(parsedCert);
+    
+    if (!validation.valid) {
+      throw new AuthenticationError(`Certificate validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    // Get authorization challenge
+    const challengeResponse = await this.getAuthorizationChallenge(contextIdentifier);
+    
+    // Create signed XML for token generation
+    const content = JSON.stringify({
+      challenge: challengeResponse.challenge,
+      timestamp: challengeResponse.timestamp,
+      contextIdentifier
+    });
+    
+    const xmlToSign = this.createXMLToSign(content);
+    const signedXML = createXMLSignature(xmlToSign, parsedCert);
+
+    const request: GenerateTokenRequest = {
+      description: description || 'Generated token'
+    };
+
+    const requestOptions: HttpRequestOptions = {
+      method: 'POST',
+      url: `${this.baseUrl}/online/Credentials/GenerateToken`,
+      body: createRequestBody(request)
+    };
+
+    const response = await this.httpClient.request<GenerateTokenResponse>(requestOptions);
+    this.logger.debug('Token generation initiated');
+    return response.data;
+  }
+
+  /**
+   * Revoke an existing authorization token
+   */
+  async revokeToken(
+    tokenNumber: string,
+    sessionToken: SessionToken
+  ): Promise<void> {
+    this.logger.debug(`Revoking token: ${tokenNumber}`);
+
+    const request: RevokeTokenRequest = {
+      tokenNumber
+    };
+
+    const requestOptions: HttpRequestOptions = {
+      method: 'POST',
+      url: `${this.baseUrl}/online/Credentials/RevokeToken`,
+      headers: {
+        'SessionToken': `Token ${sessionToken.token}`
+      },
+      body: createRequestBody(request)
+    };
+
+    await this.httpClient.request(requestOptions);
+    this.logger.debug('Token revoked successfully');
+  }
+
+  /**
+   * Query all active tokens for a context
+   */
+  async queryTokens(
+    contextIdentifier: ContextIdentifier,
+    sessionToken: SessionToken,
+    includeDetails = false
+  ): Promise<QueryTokensResponse> {
+    this.logger.debug('Querying active tokens');
+
+    const request: QueryTokensRequest = {
+      contextIdentifier,
+      includeDetails
+    };
+
+    const requestOptions: HttpRequestOptions = {
+      method: 'POST',
+      url: `${this.baseUrl}/online/Credentials/QueryTokens`,
+      headers: {
+        'SessionToken': `Token ${sessionToken.token}`
+      },
+      body: createRequestBody(request)
+    };
+
+    const response = await this.httpClient.request<QueryTokensResponse>(requestOptions);
+    this.logger.debug(`Found ${response.data.tokenList?.length || 0} active tokens`);
+    return response.data;
+  }
+
+  /**
+   * Get the status of a token generation request
+   */
+  async getTokenGenerationStatus(
+    elementReferenceNumber: string,
+    sessionToken: SessionToken
+  ): Promise<GenerateTokenResponse> {
+    const requestOptions: HttpRequestOptions = {
+      method: 'GET',
+      url: `${this.baseUrl}/online/Credentials/Status/${elementReferenceNumber}`,
+      headers: {
+        'SessionToken': `Token ${sessionToken.token}`
+      }
+    };
+
+    const response = await this.httpClient.request<GenerateTokenResponse>(requestOptions);
+    return response.data;
+  }
+
 } 

@@ -255,7 +255,7 @@ export class InvoiceService {
     const contentType = response.headers['content-type'] || 'application/pdf';
     
     return {
-      upo: upoBuffer,
+      upo: new Uint8Array(upoBuffer),
       fileName,
       contentType
     };
@@ -337,10 +337,11 @@ export class InvoiceService {
     sessionToken: SessionToken,
     options: InvoiceSubmissionOptions = {}
   ): Promise<InvoiceStatusResponse> {
-    const maxAttempts = Math.ceil((options.timeout || 300000) / (options.pollInterval || 2000));
+    const timeout = options.timeout || 300000;
     const pollInterval = options.pollInterval || 2000;
+    const startTime = Date.now();
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    while (true) {
       const requestOptions: HttpRequestOptions = {
         method: 'GET',
         url: `${this.baseUrl}/online/Invoice/Status/${referenceNumber}`,
@@ -351,16 +352,27 @@ export class InvoiceService {
 
       const response = await this.httpClient.request<InvoiceStatusResponse>(requestOptions);
       
+      if (!response || !response.data) {
+        throw new ProcessError('Invalid response from KSeF server');
+      }
+      
       if (response.data.processingCode === 200) {
         return response.data;
       } else if (response.data.processingCode !== 100) {
         throw new ProcessError(`Invoice processing failed: ${response.data.processingDescription}`);
       }
 
-      await this.sleep(pollInterval);
-    }
+      // Check if we've exceeded the timeout
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= timeout) {
+        throw new ProcessError('Invoice processing timeout');
+      }
 
-    throw new ProcessError('Invoice processing timeout');
+      // Sleep for pollInterval or remaining time, whichever is shorter
+      const remainingTime = timeout - elapsed;
+      const sleepDuration = Math.min(pollInterval, remainingTime);
+      await this.sleep(sleepDuration);
+    }
   }
 
   private async pollBatchStatus(
@@ -368,10 +380,11 @@ export class InvoiceService {
     sessionToken: SessionToken,
     options: OperationOptions = {}
   ): Promise<BatchStatusResponse> {
-    const maxAttempts = Math.ceil((options.timeout || 600000) / (options.pollInterval || 5000));
+    const timeout = options.timeout || 600000;
     const pollInterval = options.pollInterval || 5000;
+    const startTime = Date.now();
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    while (true) {
       const requestOptions: HttpRequestOptions = {
         method: 'GET',
         url: `${this.baseUrl}/online/Invoice/BatchStatus/${batchReferenceNumber}`,
@@ -382,17 +395,27 @@ export class InvoiceService {
 
       const response = await this.httpClient.request<BatchStatusResponse>(requestOptions);
       
+      if (!response || !response.data) {
+        throw new ProcessError('Invalid response from KSeF server');
+      }
+      
       if (response.data.processingCode === 200) {
         return response.data;
       } else if (response.data.processingCode !== 100) {
         throw new ProcessError(`Batch processing failed: ${response.data.processingDescription}`);
       }
 
-      // Wait before next poll
-      await this.sleep(pollInterval);
-    }
+      // Check if we've exceeded the timeout
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= timeout) {
+        throw new ProcessError('Batch processing timeout - operation did not complete within expected time');
+      }
 
-    throw new ProcessError('Batch processing timeout - operation did not complete within expected time');
+      // Sleep for pollInterval or remaining time, whichever is shorter
+      const remainingTime = timeout - elapsed;
+      const sleepDuration = Math.min(pollInterval, remainingTime);
+      await this.sleep(sleepDuration);
+    }
   }
 
   private async pollAsyncQueryStatus(
@@ -400,10 +423,11 @@ export class InvoiceService {
     sessionToken: SessionToken,
     options: OperationOptions = {}
   ): Promise<AsyncQueryInvoiceStatusResponse> {
-    const maxAttempts = Math.ceil((options.timeout || 300000) / (options.pollInterval || 2000));
+    const timeout = options.timeout || 300000;
     const pollInterval = options.pollInterval || 2000;
+    const startTime = Date.now();
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    while (true) {
       const requestOptions: HttpRequestOptions = {
         method: 'GET',
         url: `${this.baseUrl}/online/Invoice/QueryStatus/${referenceNumber}`,
@@ -414,17 +438,27 @@ export class InvoiceService {
 
       const response = await this.httpClient.request<AsyncQueryInvoiceStatusResponse>(requestOptions);
       
+      if (!response || !response.data) {
+        throw new ProcessError('Invalid response from KSeF server');
+      }
+      
       if (response.data.processingCode === 200) {
         return response.data;
       } else if (response.data.processingCode !== 100) {
         throw new ProcessError(`Async query failed: ${response.data.processingDescription}`);
       }
 
-      // Wait before next poll
-      await this.sleep(pollInterval);
-    }
+      // Check if we've exceeded the timeout
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= timeout) {
+        throw new ProcessError('Async query timeout - operation did not complete within expected time');
+      }
 
-    throw new ProcessError('Async query timeout - operation did not complete within expected time');
+      // Sleep for pollInterval or remaining time, whichever is shorter
+      const remainingTime = timeout - elapsed;
+      const sleepDuration = Math.min(pollInterval, remainingTime);
+      await this.sleep(sleepDuration);
+    }
   }
 
   private chunkArray<T>(array: T[], chunkSize: number): T[][] {

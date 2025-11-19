@@ -244,4 +244,148 @@ describe('AuthenticationService', () => {
       expect(result.context.contextIdentifier).toEqual(peselContext);
     });
   });
+
+  describe('Token Management', () => {
+    let mockCertificateCredentials: CertificateCredentials;
+
+    beforeEach(() => {
+      mockCertificateCredentials = {
+        certificate: 'mock-certificate-data',
+        password: 'mock-password'
+      };
+    });
+
+    describe('generateToken', () => {
+      it('should generate a new authorization token successfully', async () => {
+        const mockChallengeResponse: AuthorisationChallengeResponse = {
+          challenge: 'mock-challenge',
+          timestamp: '2024-01-15T10:30:00Z'
+        };
+
+        const mockGenerateResponse: GenerateTokenResponse = {
+          elementReferenceNumber: 'token-ref-123',
+          status: {
+            processingCode: 100,
+            processingDescription: 'Processing',
+            referenceNumber: 'ref-123',
+            timestamp: '2024-01-15T10:30:00Z'
+          }
+        };
+
+        mockHttpClient.request
+          .mockResolvedValueOnce({ data: mockChallengeResponse }) // Authorization challenge
+          .mockResolvedValueOnce({ data: mockGenerateResponse }); // Token generation
+
+        const result = await authService.generateToken(
+          mockCertificateCredentials,
+          mockContextIdentifier,
+          'Test token description'
+        );
+
+        expect(result).toEqual(mockGenerateResponse);
+        expect(mockHttpClient.request).toHaveBeenCalledTimes(2);
+        expect(mockHttpClient.request).toHaveBeenCalledWith(
+          expect.objectContaining({
+            method: 'POST',
+            url: expect.stringContaining('/online/Session/AuthorisationChallenge')
+          })
+        );
+        expect(mockHttpClient.request).toHaveBeenCalledWith(
+          expect.objectContaining({
+            method: 'POST',
+            url: expect.stringContaining('/online/Credentials/GenerateToken')
+          })
+        );
+      });
+
+      it('should handle certificate validation failure', async () => {
+        const { validateCertificate } = await import('../src/utils/crypto.js');
+        (validateCertificate as Mock).mockReturnValue({ 
+          valid: false, 
+          errors: ['Certificate expired'] 
+        });
+
+        await expect(authService.generateToken(
+          mockCertificateCredentials,
+          mockContextIdentifier
+        )).rejects.toThrow('Certificate validation failed: Certificate expired');
+      });
+    });
+
+    describe('revokeToken', () => {
+      it('should revoke an existing token successfully', async () => {
+        const tokenNumber = 'token-123';
+        const mockSessionToken: SessionToken = {
+          token: 'session-token-123',
+          context: {
+            contextIdentifier: mockContextIdentifier,
+            credentialsRoleList: ['USER']
+          }
+        };
+
+        mockHttpClient.request.mockResolvedValueOnce({});
+
+        await authService.revokeToken(tokenNumber, mockSessionToken);
+
+        expect(mockHttpClient.request).toHaveBeenCalledWith(
+          expect.objectContaining({
+            method: 'POST',
+            url: expect.stringContaining('/online/Credentials/RevokeToken'),
+            headers: {
+              'SessionToken': 'Token session-token-123'
+            },
+            body: JSON.stringify({ tokenNumber })
+          })
+        );
+      });
+    });
+
+    describe('queryTokens', () => {
+      it('should query active tokens successfully', async () => {
+        const mockSessionToken: SessionToken = {
+          token: 'session-token-123',
+          context: {
+            contextIdentifier: mockContextIdentifier,
+            credentialsRoleList: ['USER']
+          }
+        };
+
+        const mockQueryResponse: QueryTokensResponse = {
+          tokenList: [
+            {
+              tokenNumber: 'token-1',
+              description: 'Test token 1',
+              createdTimestamp: '2024-01-15T10:30:00Z',
+              status: 'ACTIVE'
+            }
+          ],
+          status: {
+            processingCode: 200,
+            processingDescription: 'Completed',
+            referenceNumber: 'ref-123',
+            timestamp: '2024-01-15T10:30:00Z'
+          }
+        };
+
+        mockHttpClient.request.mockResolvedValueOnce({ data: mockQueryResponse });
+
+        const result = await authService.queryTokens(
+          mockContextIdentifier,
+          mockSessionToken,
+          true
+        );
+
+        expect(result).toEqual(mockQueryResponse);
+        expect(mockHttpClient.request).toHaveBeenCalledWith(
+          expect.objectContaining({
+            method: 'POST',
+            url: expect.stringContaining('/online/Credentials/QueryTokens'),
+            headers: {
+              'SessionToken': 'Token session-token-123'
+            }
+          })
+        );
+      });
+    });
+  });
 }); 

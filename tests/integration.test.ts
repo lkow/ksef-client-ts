@@ -26,12 +26,13 @@ const TEST_CONFIG = {
   timeout: 60000
 };
 
-// Sample invoice template
+// Sample invoice template - FA(3) compliant based on official samples
 const SAMPLE_INVOICE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
-<Faktura xmlns="http://crd.gov.pl/wzor/2023/06/29/12648/">
+<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns="http://crd.gov.pl/wzor/2025/02/14/02141/">
   <Naglowek>
-    <KodFormularza kodSystemowy="FA (2)" wersjaSchemy="1-0E">FA</KodFormularza>
-    <WariantFormularza>2</WariantFormularza>
+    <KodFormularza kodSystemowy="FA (3)" wersjaSchemy="1-0E">FA</KodFormularza>
+    <WariantFormularza>3</WariantFormularza>
     <DataWytworzeniaFa>{{DATE}}</DataWytworzeniaFa>
     <SystemInfo>KSeF TypeScript Integration Test</SystemInfo>
   </Naglowek>
@@ -45,6 +46,10 @@ const SAMPLE_INVOICE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
       <AdresL1>ul. Testowa 1</AdresL1>
       <AdresL2>00-001 Warszawa</AdresL2>
     </Adres>
+    <DaneKontaktowe>
+      <Email>test@company.pl</Email>
+      <Telefon>123456789</Telefon>
+    </DaneKontaktowe>
   </Podmiot1>
   <Podmiot2>
     <DaneIdentyfikacyjne>
@@ -56,24 +61,58 @@ const SAMPLE_INVOICE_TEMPLATE = `<?xml version="1.0" encoding="UTF-8"?>
       <AdresL1>ul. Kupiecka 2</AdresL1>
       <AdresL2>00-002 Kraków</AdresL2>
     </Adres>
+    <DaneKontaktowe>
+      <Email>buyer@test.pl</Email>
+      <Telefon>987654321</Telefon>
+    </DaneKontaktowe>
   </Podmiot2>
   <Fa>
     <KodWaluty>PLN</KodWaluty>
     <P_1>{{DATE}}</P_1>
+    <P_1M>Warszawa</P_1M>
     <P_2>{{INVOICE_NUMBER}}</P_2>
+    <P_6>{{DATE}}</P_6>
     <P_13_1>1000.00</P_13_1>
     <P_14_1>230.00</P_14_1>
     <P_15>1230.00</P_15>
+    <Adnotacje>
+      <P_16>2</P_16>
+      <P_17>2</P_17>
+      <P_18>2</P_18>
+      <P_18A>2</P_18A>
+      <Zwolnienie>
+        <P_19N>1</P_19N>
+      </Zwolnienie>
+      <NoweSrodkiTransportu>
+        <P_22N>1</P_22N>
+      </NoweSrodkiTransportu>
+      <P_23>2</P_23>
+      <PMarzy>
+        <P_PMarzyN>1</P_PMarzyN>
+      </PMarzy>
+    </Adnotacje>
+    <RodzajFaktury>VAT</RodzajFaktury>
+    <FP>1</FP>
     <FaWiersz>
       <NrWierszaFa>1</NrWierszaFa>
       <P_7>Test Product</P_7>
-      <P_8A>szt</P_8A>
+      <P_8A>szt.</P_8A>
       <P_8B>1.00</P_8B>
       <P_9A>1000.00</P_9A>
       <P_11>1000.00</P_11>
       <P_12>23</P_12>
     </FaWiersz>
   </Fa>
+  <Stopka>
+    <Informacje>
+      <StopkaFaktury>Test invoice footer</StopkaFaktury>
+    </Informacje>
+    <Rejestry>
+      <KRS>0000012345</KRS>
+      <REGON>123456789</REGON>
+      <BDO>000012345</BDO>
+    </Rejestry>
+  </Stopka>
 </Faktura>`;
 
 describe('KSeF Integration Tests', () => {

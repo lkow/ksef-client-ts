@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS generated files
+.DS_Store
+
+# Logs
+*.log
+
+# Coverage (Vitest)
+coverage/
+
+# ESLint cache
+.eslintcache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+
+# ESBuild meta files
+meta.json
+
+# Temporary folders
+tmp/
+temp/
+
+# Package manager lockfiles (keep pnpm-lock.yaml)
+package-lock.json
+yarn.lock

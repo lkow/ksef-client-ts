@@ -220,7 +220,8 @@ describe('InvoiceService', () => {
 
       mockHttpClient.request
         .mockResolvedValueOnce({ data: mockBatchResponse }) // Submit batch
-        .mockResolvedValueOnce({ data: mockBatchStatus }); // Poll batch status
+        .mockResolvedValueOnce({ data: mockBatchStatus }) // Poll batch status
+        .mockResolvedValueOnce({ data: { batchReferenceNumber: 'final-batch-ref' } }); // Final batch ref call
 
       const result = await invoiceService.submitInvoicesBatch(invoicesXml, mockSessionToken);
 
@@ -232,6 +233,9 @@ describe('InvoiceService', () => {
 
     it('should handle empty invoice array', async () => {
       const invoicesXml: string[] = [];
+
+      // Mock the final batch reference call for empty array
+      mockHttpClient.request.mockResolvedValueOnce({ data: { batchReferenceNumber: 'empty-batch-ref' } });
 
       const result = await invoiceService.submitInvoicesBatch(invoicesXml, mockSessionToken);
 
@@ -470,15 +474,27 @@ describe('InvoiceService', () => {
       const referenceNumber = 'ref-123';
       
       const mockUpoResponse: UpoResponse = {
-        upo: new Uint8Array([1, 2, 3, 4]), // Mock PDF bytes
+        upo: new Uint8Array([1, 2, 3, 4]), // Mock PDF bytes as Uint8Array
         fileName: 'upo-123.pdf',
         contentType: 'application/pdf'
       };
 
-      mockHttpClient.request.mockResolvedValueOnce({ data: mockUpoResponse });
+      // Mock raw UPO data (base64 encoded PDF)
+      const mockUpoData = Buffer.from([1, 2, 3, 4]).toString('base64');
+      mockHttpClient.request.mockResolvedValueOnce({ 
+        data: mockUpoData,
+        headers: {
+          'content-disposition': 'attachment; filename="upo-123.pdf"',
+          'content-type': 'application/pdf'
+        }
+      });
+
+      const { fromBase64 } = await import('../src/utils/crypto.js');
+      vi.mocked(fromBase64).mockReturnValueOnce(Buffer.from([1, 2, 3, 4]));
 
       const result = await invoiceService.getUpo(referenceNumber, mockSessionToken);
 
+      expect(mockHttpClient.request).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockUpoResponse);
       expect(mockHttpClient.request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -594,7 +610,7 @@ describe('InvoiceService', () => {
     it('should handle very large invoice XML', async () => {
       const largeXml = '<Fa>' + 'x'.repeat(1000000) + '</Fa>';
 
-      const mockResponse = {
+      const mockInvoiceResponse = {
         elementReferenceNumber: 'elem-ref-large',
         processingCode: 100,
         processingDescription: 'Processing',
@@ -602,10 +618,24 @@ describe('InvoiceService', () => {
         timestamp: '2024-01-15T10:30:00Z'
       };
 
-      mockHttpClient.request.mockResolvedValueOnce({ data: mockResponse });
+      const mockStatusResponse: InvoiceStatusResponse = {
+        referenceNumber: 'ref-large',
+        processingCode: 200,
+        processingDescription: 'Completed',
+        timestamp: '2024-01-15T10:31:00Z',
+        acquisitionTimestamp: '2024-01-15T10:31:00Z',
+        ksefReferenceNumber: 'ksef-ref-large',
+        status: Status.ACCEPTED
+      };
+
+      mockHttpClient.request
+        .mockResolvedValueOnce({ data: mockInvoiceResponse })
+        .mockResolvedValueOnce({ data: mockStatusResponse });
 
       // Should handle large content gracefully
-      expect(() => invoiceService.submitInvoice(largeXml, mockSessionToken)).not.toThrow();
+      const result = await invoiceService.submitInvoice(largeXml, mockSessionToken);
+      expect(result).toBeDefined();
+      expect(result.ksefReferenceNumber).toBe('ksef-ref-large');
     });
 
     it('should handle session token with different context types', async () => {
@@ -627,7 +657,19 @@ describe('InvoiceService', () => {
         timestamp: '2024-01-15T10:30:00Z'
       };
 
-      mockHttpClient.request.mockResolvedValueOnce({ data: mockResponse });
+      const mockStatusResponse = {
+        referenceNumber: 'ref-pesel',
+        processingCode: 200,
+        processingDescription: 'Completed',
+        timestamp: '2024-01-15T10:31:00Z',
+        acquisitionTimestamp: '2024-01-15T10:31:00Z',
+        ksefReferenceNumber: 'ksef-pesel',
+        status: Status.ACCEPTED
+      };
+
+      mockHttpClient.request
+        .mockResolvedValueOnce({ data: mockResponse }) // Submit invoice
+        .mockResolvedValueOnce({ data: mockStatusResponse }); // Poll status
 
       await expect(invoiceService.submitInvoice(invoiceXml, peselSessionToken)).resolves.toBeDefined();
     });

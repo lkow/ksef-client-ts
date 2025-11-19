@@ -14,6 +14,11 @@ A comprehensive TypeScript client library for Poland's national e-invoicing syst
 - 📊 **Status Polling**: Automatic polling for async operations
 - 🛡️ **Type Safety**: Full TypeScript support with comprehensive type definitions
 - 🌍 **Multi-Environment**: Support for test, and production environments
+- 🎨 **Visualization**: Transform FA(3) invoices to HTML/PDF using official XSL stylesheets
+- 🚦 **Rate Limiting**: Built-in rate limiting to comply with API constraints
+- 📱 **QR Code Generation**: Generate QR codes for invoices per KSeF specification
+- 💾 **Offline Mode**: Generate invoices offline (offline24) and submit later
+- 🏢 **Multi-Party Support**: Handle multiple NIP contexts concurrently
 
 ## Installation
 
@@ -65,6 +70,37 @@ const invoices = await client.queryInvoices({
 // Cleanup
 client.destroy();
 ```
+
+### Token Management
+
+The client now supports complete token lifecycle management:
+
+```typescript
+// Generate a new authorization token
+const tokenResponse = await client.auth.generateToken(
+  certificateCredentials,
+  contextIdentifier,
+  'My Application Token'
+);
+
+// Check token generation status
+const tokenStatus = await client.auth.getTokenGenerationStatus(
+  tokenResponse.elementReferenceNumber,
+  sessionToken
+);
+
+// Query all active tokens
+const activeTokens = await client.auth.queryTokens(
+  contextIdentifier,
+  sessionToken,
+  true // Include details
+);
+
+// Revoke a token
+await client.auth.revokeToken(tokenNumber, sessionToken);
+```
+
+For a complete guide on token lifecycle management, see [TOKEN_LIFECYCLE_GUIDE.md](./TOKEN_LIFECYCLE_GUIDE.md).
 
 ### Token-Based Authentication
 
@@ -191,6 +227,218 @@ interface CertificateCredentials {
 ```typescript
 interface TokenCredentials {
   token: string; // Pre-generated authentication token
+}
+```
+
+## Rate Limiting
+
+The client includes built-in rate limiting to ensure compliance with KSeF API limits:
+
+```typescript
+import { KsefClient, DEFAULT_RATE_LIMITS } from '@ksef/client';
+
+const client = new KsefClient({
+  environment: 'prod',
+  credentials: { token: 'your-token' },
+  contextIdentifier: { type: 'onip', value: '1234567890' },
+  httpOptions: {
+    rateLimitConfig: {
+      ...DEFAULT_RATE_LIMITS,
+      enabled: true,
+      requestsPerMinute: 50,  // Conservative limit
+      requestsPerHour: 3000,
+      maxConcurrentSessions: 3
+    }
+  }
+});
+```
+
+See [API_LIMITS.md](./docs/API_LIMITS.md) for more details.
+
+## QR Code Generation
+
+Generate QR codes for invoices according to KSeF specifications:
+
+```typescript
+import { QRCodeService } from '@ksef/client';
+
+const qrService = new QRCodeService('prod');
+
+// Generate QR code for online invoice
+const qrCode = await qrService.generateOnlineInvoiceQR({
+  ksefReferenceNumber: 'KSeF-ref-12345',
+  invoiceNumber: 'FV/2025/001',
+  invoiceDate: '2025-01-15',
+  sellerIdentifier: { type: 'onip', value: '1234567890' },
+  totalAmount: 1230.50,
+  currency: 'PLN'
+});
+
+// QR code data ready for embedding
+console.log(qrCode.data); // Base64 data URL or PNG buffer
+```
+
+## Offline Invoice Mode
+
+Generate invoices when KSeF is unavailable and submit them later (offline24 mode):
+
+```typescript
+import { OfflineInvoiceService } from '@ksef/client';
+
+const offlineService = new OfflineInvoiceService(
+  httpClient,
+  baseUrl,
+  storage,
+  'prod'
+);
+
+// Generate offline invoice with QR codes (no API call!)
+const offlineInvoice = await offlineService.generateOfflineInvoice(
+  invoiceXml,
+  qrCodeData,
+  { mode: 'offline24' }
+);
+
+// Submit within 24 hours
+const result = await offlineService.submitOfflineInvoice(
+  offlineInvoice.id,
+  sessionToken
+);
+```
+
+**Benefits:**
+- Bypass real-time API limits
+- Generate invoices immediately
+- Batch submission during off-peak hours
+- Business continuity when KSeF is down
+
+See [OFFLINE_MODE_GUIDE.md](./docs/OFFLINE_MODE_GUIDE.md) for complete guide.
+
+## Multi-Party Usage
+
+Handle multiple NIP contexts concurrently (perfect for AWS Lambda + SQS):
+
+```typescript
+import { createClientForNIP, KsefClientPool } from '@ksef/client';
+
+// Factory pattern: one client per NIP
+const client1 = createClientForNIP('1234567890', 'token1');
+const client2 = createClientForNIP('0987654321', 'token2');
+
+await client1.login();
+await client2.login();
+
+// Each client has independent rate limits
+await Promise.all([
+  client1.submitInvoice(invoice1),
+  client2.submitInvoice(invoice2)
+]);
+
+// Or use client pool for many NIPs
+const pool = new KsefClientPool();
+const client = pool.getClient(nip, token);
+```
+
+**Architecture Pattern:**
+```
+Orchestrator Lambda → SQS Queue → Worker Lambdas (one client per NIP)
+```
+
+See [MULTI_PARTY_GUIDE.md](./docs/MULTI_PARTY_GUIDE.md) for AWS Lambda patterns.
+
+## Visualization Service
+
+The KSeF client includes a powerful visualization service that transforms FA(3) XML invoices into HTML and PDF formats using the official Polish government XSL stylesheets.
+
+### Features
+
+- 🎨 **HTML Output**: Transform FA(3) invoices to styled HTML
+- 📄 **PDF Generation**: Convert invoices to PDF using Puppeteer
+- 🎯 **Official Stylesheets**: Uses government-approved XSL templates
+- ⚙️ **Customizable**: Support for custom styling and page options
+- 🔍 **Validation**: Built-in XML structure validation
+
+### Basic Usage
+
+```typescript
+import { visualizationService } from '@ksef/client';
+
+// Transform to HTML
+const htmlResult = await visualizationService.visualize({
+  invoiceXml: fa3XmlString,
+  outputFormat: 'html'
+});
+
+if (htmlResult.success) {
+  console.log('HTML generated:', htmlResult.data);
+}
+
+// Transform to PDF
+const pdfResult = await visualizationService.visualize({
+  invoiceXml: fa3XmlString,
+  outputFormat: 'pdf',
+  pdfOptions: {
+    format: 'A4',
+    margin: {
+      top: '1cm',
+      right: '1cm',
+      bottom: '1cm',
+      left: '1cm'
+    },
+    printBackground: true
+  }
+});
+
+if (pdfResult.success) {
+  // pdfResult.data is a Buffer containing the PDF
+  fs.writeFileSync('invoice.pdf', pdfResult.data);
+}
+```
+
+### Advanced Usage
+
+```typescript
+// Transform with custom options
+const html = await visualizationService.transformToHtml(fa3Xml, {
+  pageTitle: 'Custom Invoice Title',
+  customStyles: `
+    .invoice-header { 
+      background-color: #f0f0f0; 
+      padding: 20px; 
+    }
+  `
+});
+
+// Direct PDF transformation
+const pdfBuffer = await visualizationService.transformToPdf(fa3Xml, {
+  format: 'A3',
+  displayHeaderFooter: true,
+  printBackground: false
+});
+```
+
+### Service Information
+
+```typescript
+// Get supported formats
+const formats = visualizationService.getSupportedFormats();
+// ['html', 'pdf']
+
+// Get stylesheet information
+const info = visualizationService.getStylesheetInfo();
+// { version: '2025/06/25/13775', source: 'https://crd.gov.pl/wzor/2025/06/25/13775/styl.xsl' }
+```
+
+### Error Handling
+
+```typescript
+const result = await visualizationService.visualize({
+  invoiceXml: invalidXml,
+  outputFormat: 'html'
+});
+
+if (!result.success) {
+  console.error('Visualization failed:', result.error);
 }
 ```
 

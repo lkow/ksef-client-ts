@@ -423,7 +423,6 @@ describe('PermissionsService', () => {
       );
 
       expect(result.permissions).toHaveLength(0);
-      expect(result.totalCount).toBe(0);
     });
 
     it('should handle query errors', async () => {

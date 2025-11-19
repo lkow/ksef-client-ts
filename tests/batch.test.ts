@@ -14,9 +14,10 @@ import { Status, BatchStatus } from '../src/types/invoice.js';
 import { RoleType } from '../src/types/permissions.js';
 
 // Mock the invoice service
+const mockSubmitInvoice = vi.fn();
 vi.mock('../src/services/invoice.js', () => ({
   InvoiceService: vi.fn().mockImplementation(() => ({
-    submitInvoice: vi.fn()
+    submitInvoice: mockSubmitInvoice
   }))
 }));
 
@@ -29,7 +30,7 @@ describe('BatchService', () => {
   let batchService: BatchService;
   let mockHttpClient: any;
   let mockSessionToken: SessionToken;
-  let mockInvoiceService: any;
+  // mockInvoiceService is now handled by mockSubmitInvoice
 
   beforeEach(() => {
     mockHttpClient = {
@@ -46,9 +47,8 @@ describe('BatchService', () => {
 
     batchService = new BatchService(mockHttpClient, 'https://test.ksef.mf.gov.pl/api/v2', true);
     
-    // Get the mocked invoice service instance
-    const { InvoiceService } = require('../src/services/invoice.js');
-    mockInvoiceService = InvoiceService.mock.results[0].value;
+    // Reset mock for each test
+    mockSubmitInvoice.mockClear();
   });
 
   describe('Constructor', () => {
@@ -111,7 +111,7 @@ describe('BatchService', () => {
         .mockResolvedValueOnce({}); // Close batch session
 
       // Mock invoice submissions
-      mockInvoiceService.submitInvoice
+      mockSubmitInvoice
         .mockResolvedValueOnce(mockInvoiceResults[0])
         .mockResolvedValueOnce(mockInvoiceResults[1])
         .mockResolvedValueOnce(mockInvoiceResults[2]);
@@ -126,7 +126,7 @@ describe('BatchService', () => {
         errorCount: 0
       });
 
-      expect(mockInvoiceService.submitInvoice).toHaveBeenCalledTimes(3);
+      expect(mockSubmitInvoice).toHaveBeenCalledTimes(3);
       expect(mockHttpClient.request).toHaveBeenCalledTimes(2); // Open + close
     });
 
@@ -160,7 +160,7 @@ describe('BatchService', () => {
         .mockResolvedValueOnce({});
 
       // Mock invoice submissions - one success, one failure
-      mockInvoiceService.submitInvoice
+      mockSubmitInvoice
         .mockResolvedValueOnce(mockSuccessResult)
         .mockRejectedValueOnce(new Error('Validation failed'));
 
@@ -239,7 +239,7 @@ describe('BatchService', () => {
         .mockResolvedValueOnce({ data: mockBatchSession }) // Open succeeds
         .mockRejectedValueOnce(new Error('Close failed')); // Close fails
 
-      mockInvoiceService.submitInvoice.mockResolvedValueOnce(mockInvoiceResult);
+      mockSubmitInvoice.mockResolvedValueOnce(mockInvoiceResult);
 
       await expect(batchService.submitBatch(invoices, mockSessionToken))
         .rejects.toThrow(ProcessError);
@@ -432,7 +432,7 @@ describe('BatchService', () => {
 
       // Mock all invoice submissions as successful
       for (let i = 0; i < 100; i++) {
-        mockInvoiceService.submitInvoice.mockResolvedValueOnce({
+        mockSubmitInvoice.mockResolvedValueOnce({
           referenceNumber: `inv-ref-${i}`,
           ksefReferenceNumber: `ksef-${i}`,
           acquisitionTimestamp: '2024-01-15T10:30:00Z',
@@ -444,7 +444,7 @@ describe('BatchService', () => {
 
       expect(result.successCount).toBe(100);
       expect(result.errorCount).toBe(0);
-      expect(mockInvoiceService.submitInvoice).toHaveBeenCalledTimes(100);
+      expect(mockSubmitInvoice).toHaveBeenCalledTimes(100);
     });
 
     it('should handle session token with different context types', async () => {

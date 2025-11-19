@@ -15,4 +15,7 @@ export * from './invoice.js';
 export * from './permissions.js';
 
 // Configuration types
-export * from './config.js'; 
+export * from './config.js';
+
+// Visualization types
+export * from './visualization.js'; 
