@@ -1,627 +1,151 @@
-# KSeF TypeScript Client
+# KSeF TypeScript Client (API 2.0 RC5.7)
 
-A comprehensive TypeScript client library for Poland's national e-invoicing system **KSeF (Krajowy System e-Faktur)**. This package provides a complete integration with KSeF's REST API (version 2.0), supporting authentication, invoice submission, retrieval, and auxiliary operations in a framework-agnostic Node.js library optimized for AWS Lambda.
+This repository provides an API v2-only SDK for Poland's e-invoicing platform (**KSeF – Krajowy System e-Faktur**). The client mirrors the official CIRFMF documentation (`RC5.7` changelog) and focuses on the REST/JSON endpoints exposed under `https://api-test.ksef.mf.gov.pl/v2`, `https://api-demo.ksef.mf.gov.pl/v2`, and `https://api.ksef.mf.gov.pl/v2`.
 
-## Features
+- ✅ JWT authentication (token + XAdES) with refresh helpers
+- ✅ Interactive & batch session management with AES-256 encryption helpers
+- ✅ Invoice uploads, polling, and UPO downloads
+- ✅ Permissions & token lifecycle APIs (entities, EU administration, attachments)
+- ✅ Authentication session introspection & revocation
+- ✅ Test data utilities (TE-only) and sample flow wired via Vitest
+- ✅ Dynamic rate-limit sync helpers for `/api/v2/rate-limits`
 
-- 🔐 **Dual Authentication Support**: Certificate-based and token-based authentication
-- 📄 **Invoice Operations**: Submit, retrieve, and query invoices
-- 📦 **Batch Processing**: Submit multiple invoices efficiently
-- 🎫 **Token Management**: Generate, revoke, and manage authentication tokens
-- 👥 **Permissions Management**: Grant and revoke user permissions
-- ⚡ **AWS Lambda Optimized**: Lightweight and fast cold starts
-- 🔄 **Automatic Retries**: Built-in retry logic for transient failures
-- 📊 **Status Polling**: Automatic polling for async operations
-- 🛡️ **Type Safety**: Full TypeScript support with comprehensive type definitions
-- 🌍 **Multi-Environment**: Support for test, and production environments
-- 🎨 **Visualization**: Transform FA(3) invoices to HTML/PDF using official XSL stylesheets
-- 🚦 **Rate Limiting**: Built-in rate limiting to comply with API constraints
-- 📱 **QR Code Generation**: Generate QR codes for invoices per KSeF specification
-- 💾 **Offline Mode**: Generate invoices offline (offline24) and submit later
-- 🏢 **Multi-Party Support**: Handle multiple NIP contexts concurrently
+> **Status:** Legacy API 1.0 paths have been removed. All docs and examples now reference `KsefApiV2Client` exclusively.
 
 ## Installation
 
 ```bash
-npm install @ksef/client
-# or
 pnpm add @ksef/client
-# or
-yarn add @ksef/client
+# or npm install / yarn add if preferred
 ```
 
-## Quick Start
+Node.js 20+ is required (matching the TLS/cipher requirements from MF). The package ships as ESM only.
 
-### Basic Usage
+## Quick start – token based
 
 ```typescript
-import { KsefClient, createTestClient } from '@ksef/client';
+import { KsefApiV2Client, ContextIdentifierType } from '@ksef/client';
 
-// Create client for test environment
-const client = createTestClient(
+const client = new KsefApiV2Client({ environment: 'test' });
+const context = { type: ContextIdentifierType.NIP, value: '1234567890' };
+
+// 1) Authenticate with a previously issued token (Portal or /api/v2/tokens)
+const authInit = await client.authentication.initiateTokenAuthentication(context, process.env.KSEF_TOKEN);
+const operation = await client.authentication.getAuthenticationStatus(authInit.referenceNumber, authInit.authenticationToken.token);
+const tokens = await client.authentication.redeemTokens(authInit.authenticationToken.token);
+
+// 2) Open a session + encrypt payload
+const formCode = { systemCode: 'FA (3)', schemaVersion: '1-0E', value: 'FA' } as const;
+const onlineSession = await client.createOnlineSession(tokens.accessToken.token, formCode);
+const encrypted = client.encryptInvoice('<InvoiceXML/>', onlineSession.encryptionMaterial);
+
+// 3) Upload invoice and close the session
+const submission = await client.sendInvoice(tokens.accessToken.token, onlineSession.referenceNumber, encrypted);
+await client.closeOnlineSession(tokens.accessToken.token, onlineSession.referenceNumber);
+
+// 4) Poll status / download presigned UPO link
+const invoices = await client.listSessionInvoices(tokens.accessToken.token, onlineSession.referenceNumber);
+console.log(invoices.invoices[0]?.upoDownloadUrl);
+```
+
+See `examples/api2-demo.ts` and `tests/api2-demo.test.ts` for a runnable walkthrough against the TE environment. Place credentials inside `.env.demo` (see `docs/API2_DEMO.md`).
+
+## Quick start – certificate (XAdES) flow
+
+```typescript
+import { KsefApiV2Client, ContextIdentifierType } from '@ksef/client';
+
+const client = new KsefApiV2Client({ environment: 'prod' });
+const authInit = await client.authentication.initiateXadesAuthenticationWithCertificate(
   {
-    // Certificate-based authentication
-    certificate: '/path/to/certificate.p12', // or Buffer/base64 string
-    password: 'certificate-password'
+    certificate: fs.readFileSync('cert.p12'),
+    password: process.env.KSEF_CERT_PASSWORD
   },
-  {
-    type: 'onip', // or 'pesel'
-    value: '1234567890' // NIP or PESEL
-  }
+  { type: ContextIdentifierType.NIP, value: '9876543210' }
 );
-
-// Authenticate
-await client.login();
-
-// Submit an invoice
-const result = await client.submitInvoice(invoiceXml);
-console.log('Invoice submitted:', result.ksefReferenceNumber);
-
-// Query invoices
-const invoices = await client.queryInvoices({
-  subjectType: 'subject1',
-  dateRange: {
-    dateType: 'INVOICE_DATE',
-    from: '2024-01-01T00:00:00Z',
-    to: '2024-01-31T23:59:59Z'
-  }
-});
-
-// Cleanup
-client.destroy();
+// Continue with getAuthenticationStatus → redeemTokens → refreshAccessToken
 ```
 
-### Token Management
+The helper builds and signs the XML payload specified in [`uwierzytelnianie.md`](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md#21-uwierzytelnianie-kwalifikowanym-podpisem-elektronicznym).
 
-The client now supports complete token lifecycle management:
+## Sessions & encryption
 
-```typescript
-// Generate a new authorization token
-const tokenResponse = await client.auth.generateToken(
-  certificateCredentials,
-  contextIdentifier,
-  'My Application Token'
-);
+1. Open an online or batch session via `client.sessions.openOnlineSession` / `openBatchSession`.
+2. The helper negotiates AES-256 keys using the `SymmetricKeyEncryption` certificate advertised by `/security/public-key-certificates`.
+3. Use `encryptInvoice` / `encryptInvoiceCorrection` to build the payload that matches `SendInvoiceRequest`.
+4. Upload invoices (`client.invoices.sendInvoice`) or stream parts with `client.batchUploader.uploadPart`.
+5. Close the session and poll using `client.sessions.getSessionStatus`, `listSessionInvoices`, `listFailedSessionInvoices`, and UPO helpers.
 
-// Check token generation status
-const tokenStatus = await client.auth.getTokenGenerationStatus(
-  tokenResponse.elementReferenceNumber,
-  sessionToken
-);
+All hashes and payload sizes follow the RC5.7 base64/SHA-256 rules from `przeglad-kluczowych-zmian-ksef-api-2-0.md`.
 
-// Query all active tokens
-const activeTokens = await client.auth.queryTokens(
-  contextIdentifier,
-  sessionToken,
-  true // Include details
-);
+## Permissions, tokens & sessions
 
-// Revoke a token
-await client.auth.revokeToken(tokenNumber, sessionToken);
-```
+- `client.permissions`: covers `/permissions/**` (personal/entity grants, indirect/self-billing, EU administration, attachment consent) and the `/permissions/query/...` endpoints. Pagination matches the `pageOffset + pageSize` semantics described in `api-changelog.md` (RC5.x additions).
+- `client.tokens`: wraps `/tokens` CRUD so you can generate, page through, or revoke authentication tokens; statuses mirror `tokeny-ksef.md`.
+- Use `KsefApiV2.AuthSessionService` directly when you need to list or revoke `/auth/sessions` entries (`auth/sesje.md` contract).
 
-For a complete guide on token lifecycle management, see [TOKEN_LIFECYCLE_GUIDE.md](./TOKEN_LIFECYCLE_GUIDE.md).
+## Rate limits
 
-### Token-Based Authentication
+Use `client.rateLimits.getEffectiveLimits(accessToken)` to fetch the current quotas advertised by `/api/v2/rate-limits` (same numbers as `limity/limity-api.md`). Helpers exported from `@ksef/client` convert those values into the `RateLimitConfig` shape consumed by the HTTP client.
 
-```typescript
-import { KsefClient } from '@ksef/client';
-
-const client = new KsefClient({
-  environment: 'test',
-  credentials: {
-    token: 'your-auth-token-here'
-  },
-  contextIdentifier: {
-    type: 'onip',
-    value: '1234567890'
-  }
-});
-
-await client.login();
-```
-
-### External Signature Delegation
-
-For secure provider integrations where you don't handle user certificates:
-
-```typescript
-import { createTestExternalSigningClient } from '@ksef/client';
-
-const client = createTestExternalSigningClient({
-  type: 'nip',
-  value: '1234567890'
-});
-
-// Generate XML for user to sign
-const authData = await client.generateAuthenticationXML();
-
-// User signs the XML with their certificate/EPUAP
-const signedXML = await userSignXML(authData.xml);
-
-// Authenticate with signed XML
-const session = await client.authenticateWithSignedXML(signedXML);
-```
-
-### AWS Lambda Example
-
-```typescript
-import { KsefClient } from '@ksef/client';
-
-export const handler = async (event: any) => {
-  const client = new KsefClient({
-    environment: 'prod',
-    credentials: {
-      certificate: process.env.KSEF_CERTIFICATE, // base64 encoded
-      password: process.env.KSEF_CERT_PASSWORD
-    },
-    contextIdentifier: {
-      type: 'onip',
-      value: process.env.KSEF_NIP
-    },
-    httpOptions: {
-      timeout: 30000,
-      keepAlive: true
-    }
-  });
-
-  try {
-    await client.login();
-    
-    const result = await client.submitInvoice(event.invoiceXml, {
-      retrieveUpo: true,
-      timeout: 60000
-    });
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        ksefReferenceNumber: result.ksefReferenceNumber,
-        status: result.status
-      })
-    };
-  } catch (error) {
-    console.error('Error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: error.message
-      })
-    };
-  } finally {
-    client.destroy();
-  }
-};
-```
-
-## Configuration
-
-### Client Configuration
-
-```typescript
-interface KsefClientConfig {
-  environment: 'test' | 'prod' | KsefEnvironmentConfig;
-  credentials: CertificateCredentials | TokenCredentials;
-  contextIdentifier: ContextIdentifier;
-  httpOptions?: HttpClientOptions;
-  debug?: boolean;
-  sessionOptions?: SessionOptions;
-}
-```
-
-### Certificate Credentials
-
-```typescript
-interface CertificateCredentials {
-  certificate: string | Buffer; // Path, PEM content, or P12/PFX data
-  password?: string;            // Certificate password if required
-  privateKey?: string | Buffer; // Separate private key (for PEM)
-  privateKeyPassword?: string;  // Private key password
-}
-```
-
-### Token Credentials
-
-```typescript
-interface TokenCredentials {
-  token: string; // Pre-generated authentication token
-}
-```
-
-## Rate Limiting
-
-The client includes built-in rate limiting to ensure compliance with KSeF API limits:
-
-```typescript
-import { KsefClient, DEFAULT_RATE_LIMITS } from '@ksef/client';
-
-const client = new KsefClient({
-  environment: 'prod',
-  credentials: { token: 'your-token' },
-  contextIdentifier: { type: 'onip', value: '1234567890' },
-  httpOptions: {
-    rateLimitConfig: {
-      ...DEFAULT_RATE_LIMITS,
-      enabled: true,
-      requestsPerMinute: 50,  // Conservative limit
-      requestsPerHour: 3000,
-      maxConcurrentSessions: 3
-    }
-  }
-});
-```
-
-See [API_LIMITS.md](./docs/API_LIMITS.md) for more details.
-
-## QR Code Generation
-
-Generate QR codes for invoices according to KSeF specifications:
-
-```typescript
-import { QRCodeService } from '@ksef/client';
-
-const qrService = new QRCodeService('prod');
-
-// Generate QR code for online invoice
-const qrCode = await qrService.generateOnlineInvoiceQR({
-  ksefReferenceNumber: 'KSeF-ref-12345',
-  invoiceNumber: 'FV/2025/001',
-  invoiceDate: '2025-01-15',
-  sellerIdentifier: { type: 'onip', value: '1234567890' },
-  totalAmount: 1230.50,
-  currency: 'PLN'
-});
-
-// QR code data ready for embedding
-console.log(qrCode.data); // Base64 data URL or PNG buffer
-```
-
-## Offline Invoice Mode
-
-Generate invoices when KSeF is unavailable and submit them later (offline24 mode):
-
-```typescript
-import { OfflineInvoiceService } from '@ksef/client';
-
-const offlineService = new OfflineInvoiceService(
-  httpClient,
-  baseUrl,
-  storage,
-  'prod'
-);
-
-// Generate offline invoice with QR codes (no API call!)
-const offlineInvoice = await offlineService.generateOfflineInvoice(
-  invoiceXml,
-  qrCodeData,
-  { mode: 'offline24' }
-);
-
-// Submit within 24 hours
-const result = await offlineService.submitOfflineInvoice(
-  offlineInvoice.id,
-  sessionToken
-);
-```
-
-**Benefits:**
-- Bypass real-time API limits
-- Generate invoices immediately
-- Batch submission during off-peak hours
-- Business continuity when KSeF is down
-
-See [OFFLINE_MODE_GUIDE.md](./docs/OFFLINE_MODE_GUIDE.md) for complete guide.
-
-## Multi-Party Usage
-
-Handle multiple NIP contexts concurrently (perfect for AWS Lambda + SQS):
-
-```typescript
-import { createClientForNIP, KsefClientPool } from '@ksef/client';
-
-// Factory pattern: one client per NIP
-const client1 = createClientForNIP('1234567890', 'token1');
-const client2 = createClientForNIP('0987654321', 'token2');
-
-await client1.login();
-await client2.login();
-
-// Each client has independent rate limits
-await Promise.all([
-  client1.submitInvoice(invoice1),
-  client2.submitInvoice(invoice2)
-]);
-
-// Or use client pool for many NIPs
-const pool = new KsefClientPool();
-const client = pool.getClient(nip, token);
-```
-
-**Architecture Pattern:**
-```
-Orchestrator Lambda → SQS Queue → Worker Lambdas (one client per NIP)
-```
-
-See [MULTI_PARTY_GUIDE.md](./docs/MULTI_PARTY_GUIDE.md) for AWS Lambda patterns.
-
-## Visualization Service
-
-The KSeF client includes a powerful visualization service that transforms FA(3) XML invoices into HTML and PDF formats using the official Polish government XSL stylesheets.
-
-### Features
-
-- 🎨 **HTML Output**: Transform FA(3) invoices to styled HTML
-- 📄 **PDF Generation**: Convert invoices to PDF using Puppeteer
-- 🎯 **Official Stylesheets**: Uses government-approved XSL templates
-- ⚙️ **Customizable**: Support for custom styling and page options
-- 🔍 **Validation**: Built-in XML structure validation
-
-### Basic Usage
-
-```typescript
-import { visualizationService } from '@ksef/client';
-
-// Transform to HTML
-const htmlResult = await visualizationService.visualize({
-  invoiceXml: fa3XmlString,
-  outputFormat: 'html'
-});
-
-if (htmlResult.success) {
-  console.log('HTML generated:', htmlResult.data);
-}
-
-// Transform to PDF
-const pdfResult = await visualizationService.visualize({
-  invoiceXml: fa3XmlString,
-  outputFormat: 'pdf',
-  pdfOptions: {
-    format: 'A4',
-    margin: {
-      top: '1cm',
-      right: '1cm',
-      bottom: '1cm',
-      left: '1cm'
-    },
-    printBackground: true
-  }
-});
-
-if (pdfResult.success) {
-  // pdfResult.data is a Buffer containing the PDF
-  fs.writeFileSync('invoice.pdf', pdfResult.data);
-}
-```
-
-### Advanced Usage
-
-```typescript
-// Transform with custom options
-const html = await visualizationService.transformToHtml(fa3Xml, {
-  pageTitle: 'Custom Invoice Title',
-  customStyles: `
-    .invoice-header { 
-      background-color: #f0f0f0; 
-      padding: 20px; 
-    }
-  `
-});
-
-// Direct PDF transformation
-const pdfBuffer = await visualizationService.transformToPdf(fa3Xml, {
-  format: 'A3',
-  displayHeaderFooter: true,
-  printBackground: false
-});
-```
-
-### Service Information
-
-```typescript
-// Get supported formats
-const formats = visualizationService.getSupportedFormats();
-// ['html', 'pdf']
-
-// Get stylesheet information
-const info = visualizationService.getStylesheetInfo();
-// { version: '2025/06/25/13775', source: 'https://crd.gov.pl/wzor/2025/06/25/13775/styl.xsl' }
-```
-
-### Error Handling
-
-```typescript
-const result = await visualizationService.visualize({
-  invoiceXml: invalidXml,
-  outputFormat: 'html'
-});
-
-if (!result.success) {
-  console.error('Visualization failed:', result.error);
-}
-```
-
-## API Reference
-
-### Authentication
-
-```typescript
-// Login with configured credentials
-await client.login();
-
-// Check authentication status
-const isAuthenticated = client.isAuthenticated();
-
-// Get current session
-const session = client.getCurrentSession();
-
-// Logout
-await client.logout();
-```
-
-### Invoice Operations
-
-```typescript
-// Submit single invoice
-const result = await client.submitInvoice(invoiceXml, {
-  retrieveUpo: true,
-  timeout: 60000
-});
-
-// Submit multiple invoices
-const batchResult = await client.submitInvoicesBatch([xml1, xml2, xml3], {
-  batchSize: 10,
-  retrieveUpo: false
-});
-
-// Get invoice by reference
-const invoice = await client.getInvoice('KSeF-reference-number');
-
-// Query invoices
-const invoices = await client.queryInvoices({
-  subjectType: 'subject1',
-  dateRange: {
-    dateType: 'INVOICE_DATE',
-    from: '2024-01-01T00:00:00Z',
-    to: '2024-01-31T23:59:59Z'
-  },
-  pageSize: 100
-});
-```
-
-### Token Management
-
-```typescript
-// Generate new token
-const token = await client.generateAuthToken('My Integration Token');
-
-// Revoke token
-await client.revokeAuthToken(tokenNumber);
-
-// Query available tokens
-const tokens = await client.queryAuthTokens();
-```
-
-### Permissions Management
-
-```typescript
-// Grant permissions
-await client.grantPermission(
-  { type: 'pesel', value: '12345678901' },
-  'invoice_write'
-);
-
-// Revoke permissions
-await client.revokePermission({ type: 'pesel', value: '12345678901' });
-```
-
-## Error Handling
-
-The library provides structured error handling with specific error types:
-
-```typescript
-import { 
-  AuthenticationError, 
-  ValidationError, 
-  ProcessError,
-  KsefApiError 
+```ts
+import {
+  HttpClient,
+  KsefApiV2Client,
+  DEFAULT_RATE_LIMITS,
+  buildRateLimitConfigFromCategory,
+  getRateLimitConfigForEndpoint
 } from '@ksef/client';
 
-try {
-  await client.submitInvoice(invalidXml);
-} catch (error) {
-  if (error instanceof AuthenticationError) {
-    console.error('Authentication failed:', error.message);
-    // Re-authenticate or check credentials
-  } else if (error instanceof ValidationError) {
-    console.error('Validation error:', error.message, error.code);
-    // Fix the input data
-  } else if (error instanceof ProcessError) {
-    console.error('Processing error:', error.message, error.referenceNumber);
-    // Check operation status or retry
-  } else if (error instanceof KsefApiError) {
-    console.error('API error:', error.message, error.statusCode);
-    // Handle API-specific errors
-  }
-}
+const baseConfig = { ...DEFAULT_RATE_LIMITS, enabled: true };
+const httpClient = new HttpClient({ rateLimitConfig: baseConfig });
+const client = new KsefApiV2Client({ environment: 'prod', httpClient });
+const effectiveLimits = await client.rateLimits.getEffectiveLimits(accessToken);
+
+const invoiceSendConfig = buildRateLimitConfigFromCategory('invoiceSend', effectiveLimits, baseConfig);
+
+const perEndpointConfig = getRateLimitConfigForEndpoint(
+  'POST',
+  '/sessions/online/{referenceNumber}/invoices',
+  { baseConfig, effectiveLimits }
+);
 ```
 
-## Environment Configuration
+## Test data utilities (TE only)
 
-### Test Environment
+`client.testData` is available **only** when the client is instantiated with `environment: 'test'`. It exposes the scaffolding endpoints from [`dane-testowe-scenariusze.md`](https://github.com/CIRFMF/ksef-docs/blob/main/dane-testowe-scenariusze.md):
+
 ```typescript
-const client = new KsefClient({
-  environment: 'test', // Uses https://ksef-test.mf.gov.pl/api/v2
-  // ... other config
-});
+await client.testData?.grantPermissions({ ... });
+await client.testData?.createSubject({ ... });
+await client.testData?.setSessionLimits(token, { onlineSession: {...}, batchSession: {...} });
 ```
 
-### Production Environment
-```typescript
-const client = new KsefClient({
-  environment: 'prod', // Uses https://ksef.mf.gov.pl/api/v2
-  // ... other config
-});
-```
+Each method throws if invoked against production to make the TE-only contract explicit.
 
-### Custom Environment
-```typescript
-const client = new KsefClient({
-  environment: {
-    baseUrl: 'https://custom-ksef-instance.com/api/v2',
-    name: 'custom'
-  },
-  // ... other config
-});
-```
+## Documentation map
 
-## Testing
+| File | Purpose |
+| --- | --- |
+| `docs/CIRFMF_ALIGNMENT.md` | Gap analysis vs. RC5.7 (api-changelog, limity, uwierzytelnianie) |
+| `docs/API2_IMPLEMENTATION_NOTES.md` | Rationale for each service, with direct links to CIRFMF markdown |
+| `docs/API2_DEMO.md` | Step-by-step demo (TE token) + `.env.demo` description |
+| `docs/API_LIMITS.md` | Summary of `limity/limity-api.md` and how to apply it in client code |
+| `docs/CERTIFICATE_GUIDE.md` | Certificate management for API 2.0 (token + XAdES) |
+| `docs/MULTI_PARTY_GUIDE.md` | Patterns for multi-tenant integrations using API v2 |
+| `docs/OFFLINE_MODE_GUIDE.md` + `docs/OFFLINE_MODES_ARCHITECTURE.md` | Offline/technical correction flows, deadline tracking |
+| `docs/TOKEN_LIFECYCLE_GUIDE.md` | Token APIs end-to-end |
 
-```bash
-# Run tests
-npm test
+## Running the demo & tests
 
-# Run tests with coverage
-npm run test:coverage
+1. `cp .env.demo.example .env.demo` and fill in `KSEF_V2_TOKEN`, `KSEF_V2_ENV`, `KSEF_V2_NIP`, `KSEF_V2_INVOICE`.
+2. `pnpm ts-node examples/api2-demo.ts` – manual demo.
+3. `pnpm test tests/api2-demo.test.ts` – Vitest will autoload `.env.demo` (skips if token missing).
+4. `pnpm lint` – ESLint with the provided Flat config.
 
-# Run tests in watch mode
-npm run test:watch
-```
+## References
 
-## Building
+- [`CIRFMF/ksef-docs`](https://github.com/CIRFMF/ksef-docs): `przeglad-kluczowych-zmian-ksef-api-2-0.md`, `api-changelog.md`, `uwierzytelnianie.md`, `limity/limity-api.md`, `tokeny-ksef.md`, `auth/sesje.md`, `dane-testowe-scenariusze.md`, `tryby-offline.md`, `kody-qr.md`.
+- OpenAPI snapshot: `docs/reference/ksef-api-v2-openapi.json` (downloaded 2025-11-18 from TE docs portal).
 
-```bash
-# Clean build directory
-npm run clean
-
-# Build the package
-npm run build
-
-# Build in watch mode
-npm run dev
-```
-
-## Requirements
-
-- Node.js 20+
-- TypeScript 5.0+ (for development)
-
-## License
-
-MIT
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to our repository.
-
-## Support
-
-For issues and questions:
-- Create an issue on GitHub
-- Check the official KSeF documentation
-- Review the API documentation at the KSeF portal
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history and updates. 
+Pull requests should link the relevant CIRFMF source (section + date) so we can keep parity with MF releases.

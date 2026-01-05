@@ -3,13 +3,14 @@
  */
 
 import { createHash, createSign } from 'node:crypto';
-// Selective imports from node-forge to reduce bundle size
-import { pki, pkcs12, asn1, util, md } from 'node-forge';
+// Import node-forge as namespace for ESM compatibility
+import * as forge from 'node-forge';
+const { pki, pkcs12, asn1, util, md } = forge;
 import type { CertificateCredentials } from '@/types/auth.js';
 
 export interface ParsedCertificate {
-  certificate: pki.Certificate;
-  privateKey: pki.PrivateKey;
+  certificate: forge.pki.Certificate;
+  privateKey: forge.pki.PrivateKey;
   subject: string;
   issuer: string;
   fingerprint: string;
@@ -20,8 +21,8 @@ export interface ParsedCertificate {
  */
 export function parseCertificate(credentials: CertificateCredentials): ParsedCertificate {
   try {
-    let certificate: pki.Certificate;
-    let privateKey: pki.PrivateKey;
+    let certificate: forge.pki.Certificate;
+    let privateKey: forge.pki.PrivateKey;
 
     if (typeof credentials.certificate === 'string') {
       // Handle PEM format

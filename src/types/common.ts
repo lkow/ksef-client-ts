@@ -23,16 +23,20 @@ export enum IpAddressPolicy {
 
 export interface KsefEnvironmentConfig {
   baseUrl: string;
-  name: 'test' | 'prod';
+  name: 'test' | 'demo' | 'prod';
 }
 
 export const KSEF_ENVIRONMENTS: Record<string, KsefEnvironmentConfig> = {
   test: {
-    baseUrl: 'https://ksef-test.mf.gov.pl/api/v2',
+    baseUrl: 'https://api-test.ksef.mf.gov.pl/v2',
     name: 'test'
   },
+  demo: {
+    baseUrl: 'https://api-demo.ksef.mf.gov.pl/v2',
+    name: 'demo'
+  },
   prod: {
-    baseUrl: 'https://ksef.mf.gov.pl/api/v2',
+    baseUrl: 'https://api.ksef.mf.gov.pl/v2',
     name: 'prod'
   }
 };

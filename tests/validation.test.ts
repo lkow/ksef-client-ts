@@ -1,152 +1,80 @@
-/**
- * Tests for validation utilities
- */
-
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+  validateApiV2ContextIdentifier,
+  validateApiV2IndirectTargetIdentifier,
+  validateApiV2SubjectIdentifier,
+  validateFingerprint,
+  validateIdDocument,
+  validateInternalId,
+  validateIsoCountryCode,
   validateNIP,
+  validateNipVatUe,
   validatePESEL,
-  validateContextIdentifier,
-  validateInvoiceXML,
-  validateDateFormat,
-  validateDateRange,
-  formatNIP,
-  formatPESEL
+  validatePeppolId
 } from '../src/utils/validation.js';
-import { ValidationError } from '../src/types/common.js';
 
-describe('Validation Utils', () => {
-  describe('validateNIP', () => {
-    it('should validate correct NIP', () => {
-      // Test with a valid NIP (5260001246 is a commonly used test NIP)
-      expect(validateNIP('5260001246')).toBe(true);
-      expect(validateNIP('526-000-12-46')).toBe(true); // with formatting
-    });
-
-    it('should reject invalid NIP', () => {
-      expect(validateNIP('1234567890')).toBe(false);
-      expect(validateNIP('123456789')).toBe(false); // too short
-      expect(validateNIP('12345678901')).toBe(false); // too long
-      expect(validateNIP('')).toBe(false);
-    });
+describe('validation utilities', () => {
+  it('validates NIP strictly', () => {
+    expect(validateNIP('9876543210')).toBe(true);
+    expect(validateNIP('9876543211')).toBe(false);
+    expect(validateNIP('123-456-78-90')).toBe(false);
   });
 
-  describe('validatePESEL', () => {
-    it('should validate correct PESEL', () => {
-      // Test with a valid PESEL (44051401359 is a commonly used test PESEL)
-      expect(validatePESEL('44051401359')).toBe(true);
-      expect(validatePESEL('440514-01359')).toBe(true); // with formatting
-    });
-
-    it('should reject invalid PESEL', () => {
-      expect(validatePESEL('12345678901')).toBe(false);
-      expect(validatePESEL('1234567890')).toBe(false); // too short
-      expect(validatePESEL('123456789012')).toBe(false); // too long
-      expect(validatePESEL('')).toBe(false);
-    });
+  it('validates PESEL strictly', () => {
+    expect(validatePESEL('99010112342')).toBe(true);
+    expect(validatePESEL('9901011234')).toBe(false);
+    expect(validatePESEL('99130112345')).toBe(false);
   });
 
-  describe('validateContextIdentifier', () => {
-    it('should validate correct context identifiers', () => {
-      expect(() => validateContextIdentifier({
-        type: 'onip',
-        value: '5260001246'
-      })).not.toThrow();
-
-      expect(() => validateContextIdentifier({
-        type: 'pesel',
-        value: '44051401359'
-      })).not.toThrow();
-    });
-
-    it('should reject invalid context identifiers', () => {
-      expect(() => validateContextIdentifier({
-        type: 'onip',
-        value: '1234567890'
-      })).toThrow(ValidationError);
-
-      expect(() => validateContextIdentifier({
-        type: 'unknown' as any,
-        value: '1234567890'
-      })).toThrow(ValidationError);
-
-      expect(() => validateContextIdentifier({} as any)).toThrow(ValidationError);
-    });
+  it('validates InternalId', () => {
+    expect(validateInternalId('9876543210-12345')).toBe(true);
+    expect(validateInternalId('9876543211-12345')).toBe(false);
+    expect(validateInternalId('9876543210-1234')).toBe(false);
   });
 
-  describe('validateInvoiceXML', () => {
-    it('should validate basic XML structure', () => {
-      const validXML = `<?xml version="1.0" encoding="UTF-8"?>
-<Fa>
-  <Naglowek>
-    <KodFormularza>FA(3)</KodFormularza>
-  </Naglowek>
-  <Podmiot1>
-    <DaneIdentyfikacyjne>
-      <NIP>5260001246</NIP>
-    </DaneIdentyfikacyjne>
-  </Podmiot1>
-  <Fa1>
-    <P_1>2024-01-15</P_1>
-  </Fa1>
-</Fa>`;
-
-      expect(() => validateInvoiceXML(validXML)).not.toThrow();
-    });
-
-    it('should reject invalid XML', () => {
-      expect(() => validateInvoiceXML('')).toThrow(ValidationError);
-      expect(() => validateInvoiceXML('not xml')).toThrow(ValidationError);
-      expect(() => validateInvoiceXML('<incomplete')).toThrow(ValidationError);
-    });
+  it('validates NipVatUe', () => {
+    expect(validateNipVatUe('9876543210-DE123456789')).toBe(true);
+    expect(validateNipVatUe('9876543210-PL')).toBe(false);
   });
 
-  describe('validateDateFormat', () => {
-    it('should validate ISO 8601 dates', () => {
-      expect(validateDateFormat('2024-01-15T10:30:00Z')).toBe(true);
-      expect(validateDateFormat('2024-01-15T10:30:00.123Z')).toBe(true);
-      expect(validateDateFormat('2024-01-15T10:30:00')).toBe(true);
-    });
-
-    it('should reject invalid date formats', () => {
-      expect(validateDateFormat('2024-01-15')).toBe(false);
-      expect(validateDateFormat('15/01/2024')).toBe(false);
-      expect(validateDateFormat('invalid')).toBe(false);
-    });
+  it('validates PeppolId', () => {
+    expect(validatePeppolId('PPL123456')).toBe(true);
+    expect(validatePeppolId('APL123456')).toBe(false);
   });
 
-  describe('validateDateRange', () => {
-    it('should validate correct date ranges', () => {
-      expect(() => validateDateRange(
-        '2024-01-01T00:00:00Z',
-        '2024-01-31T23:59:59Z'
-      )).not.toThrow();
-    });
-
-    it('should reject invalid date ranges', () => {
-      expect(() => validateDateRange(
-        '2024-01-31T23:59:59Z',
-        '2024-01-01T00:00:00Z'
-      )).toThrow(ValidationError);
-
-      expect(() => validateDateRange(
-        '2024-01-01T00:00:00Z',
-        '2025-01-02T00:00:00Z'
-      )).toThrow(ValidationError); // More than 1 year
-    });
+  it('validates fingerprints', () => {
+    expect(validateFingerprint('A'.repeat(64))).toBe(true);
+    expect(validateFingerprint('a'.repeat(64))).toBe(false);
   });
 
-  describe('formatNIP', () => {
-    it('should format NIP correctly', () => {
-      expect(formatNIP('5260001246')).toBe('526-000-12-46');
-      expect(formatNIP('526-000-12-46')).toBe('526-000-12-46');
-    });
+  it('validates ISO 3166-1 alpha-2 country codes', () => {
+    expect(validateIsoCountryCode('PL')).toBe(true);
+    expect(validateIsoCountryCode('ZZ')).toBe(false);
+    expect(validateIsoCountryCode('pl')).toBe(false);
   });
 
-  describe('formatPESEL', () => {
-    it('should format PESEL correctly', () => {
-      expect(formatPESEL('44051401359')).toBe('440514-01359');
-      expect(formatPESEL('440514-01359')).toBe('440514-01359');
-    });
+  it('validates id documents', () => {
+    expect(() => validateIdDocument({ type: 'ID', number: 'ABC123', country: 'PL' })).not.toThrow();
+    expect(() => validateIdDocument({ type: 'ID', number: 'ABC123', country: 'ZZ' })).toThrow();
   });
-}); 
+
+  it('validates API v2 context identifiers', () => {
+    expect(() => validateApiV2ContextIdentifier({ type: 'Nip', value: '9876543210' })).not.toThrow();
+    expect(() => validateApiV2ContextIdentifier({ type: 'InternalId', value: '9876543210-12345' })).not.toThrow();
+    expect(() => validateApiV2ContextIdentifier({ type: 'NipVatUe', value: '9876543210-DE123456789' })).not.toThrow();
+    expect(() => validateApiV2ContextIdentifier({ type: 'PeppolId', value: 'PPL123456' })).not.toThrow();
+    expect(() => validateApiV2ContextIdentifier({ type: 'Nip', value: '9876543211' })).toThrow();
+  });
+
+  it('validates API v2 subject identifiers', () => {
+    expect(() => validateApiV2SubjectIdentifier({ type: 'Fingerprint', value: 'A'.repeat(64) })).not.toThrow();
+    expect(() => validateApiV2SubjectIdentifier({ type: 'Fingerprint', value: 'a'.repeat(64) })).toThrow();
+  });
+
+  it('validates API v2 indirect target identifiers', () => {
+    expect(() => validateApiV2IndirectTargetIdentifier({ type: 'AllPartners' })).not.toThrow();
+    expect(() => validateApiV2IndirectTargetIdentifier({ type: 'AllPartners', value: '9876543210' })).toThrow();
+    expect(() => validateApiV2IndirectTargetIdentifier({ type: 'Nip', value: '9876543210' })).not.toThrow();
+    expect(() => validateApiV2IndirectTargetIdentifier({ type: 'InternalId', value: '9876543210-12345' })).not.toThrow();
+  });
+});

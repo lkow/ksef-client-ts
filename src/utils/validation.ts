@@ -4,67 +4,148 @@
 
 import { ValidationError } from '@/types/common.js';
 import type { ContextIdentifier } from '@/types/common.js';
+import type {
+  ContextIdentifier as ApiV2ContextIdentifier,
+  SubjectIdentifier as ApiV2SubjectIdentifier,
+  EntityIdentifier as ApiV2EntityIdentifier
+} from '@/api2/types/common.js';
+import type { IndirectTargetIdentifier, IdDocument, PersonIdentifier } from '@/api2/types/permissions.js';
+
+const NIP_CORE_PATTERN = '[1-9]((\\d[1-9])|([1-9]\\d))\\d{7}';
+const VAT_UE_CORE_PATTERN = '(ATU\\d{8}|BE[01]{1}\\d{9}|BG\\d{9,10}|CY\\d{8}[A-Z]|CZ\\d{8,10}|DE\\d{9}|DK\\d{8}|EE\\d{9}|EL\\d{9}|ES([A-Z]\\d{8}|\\d{8}[A-Z]|[A-Z]\\d{7}[A-Z])|FI\\d{8}|FR[A-Z0-9]{2}\\d{9}|HR\\d{11}|HU\\d{8}|IE(\\d{7}[A-Z]{2}|\\d[A-Z0-9+*]\\d{5}[A-Z])|IT\\d{11}|LT(\\d{9}|\\d{12})|LU\\d{8}|LV\\d{11}|MT\\d{8}|NL[A-Z0-9+*]{12}|PT\\d{9}|RO\\d{2,10}|SE\\d{12}|SI\\d{8}|SK\\d{10}|XI((\\d{9}|\\d{12})|(GD|HA)\\d{3}))';
+
+const NIP_REGEX = new RegExp(`^${NIP_CORE_PATTERN}$`);
+const INTERNAL_ID_REGEX = new RegExp(`^${NIP_CORE_PATTERN}-\\d{5}$`);
+const NIP_VAT_UE_REGEX = new RegExp(`^${NIP_CORE_PATTERN}-${VAT_UE_CORE_PATTERN}$`);
+const PESEL_REGEX = /^\d{2}(?:0[1-9]|1[0-2]|2[1-9]|3[0-2]|4[1-9]|5[0-2]|6[1-9]|7[0-2]|8[1-9]|9[0-2])\d{7}$/;
+const PEPPOL_ID_REGEX = /^P[A-Z]{2}[0-9]{6}$/;
+const FINGERPRINT_REGEX = /^[0-9A-F]{64}$/;
+const ISO_COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const ISO_3166_ALPHA2 = new Set([
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN',
+  'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE',
+  'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF',
+  'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM',
+  'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM',
+  'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC',
+  'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK',
+  'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA',
+  'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG',
+  'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO',
+  'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
+  'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW'
+]);
 
 /**
  * Validate NIP (Polish tax identification number)
  */
 export function validateNIP(nip: string): boolean {
-  // Remove any non-digit characters
-  const cleanNip = nip.replace(/\D/g, '');
-  
-  // NIP must be exactly 10 digits
-  if (cleanNip.length !== 10) {
+  if (!nip || !NIP_REGEX.test(nip)) {
     return false;
   }
 
-  // Calculate checksum
   const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
   let sum = 0;
-  
+
   for (let i = 0; i < 9; i++) {
-    const digit = cleanNip[i];
-    const weight = weights[i];
-    if (digit && weight) {
-      sum += parseInt(digit) * weight;
-    }
+    sum += Number(nip[i]!) * weights[i]!;
   }
-  
+
   const checksum = sum % 11;
-  const lastDigitStr = cleanNip[9];
-  const lastDigit = lastDigitStr ? parseInt(lastDigitStr) : 0;
-  
-  return checksum === lastDigit;
+  const lastDigit = Number(nip[9]);
+
+  return checksum !== 10 && checksum === lastDigit;
 }
 
 /**
  * Validate PESEL (Polish personal identification number)
  */
 export function validatePESEL(pesel: string): boolean {
-  // Remove any non-digit characters
-  const cleanPesel = pesel.replace(/\D/g, '');
-  
-  // PESEL must be exactly 11 digits
-  if (cleanPesel.length !== 11) {
+  if (!pesel || !PESEL_REGEX.test(pesel)) {
     return false;
   }
 
-  // Calculate checksum
   const weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3];
   let sum = 0;
-  
+
   for (let i = 0; i < 10; i++) {
-    const digit = cleanPesel[i];
-    const weight = weights[i];
-    if (digit && weight) {
-      sum += parseInt(digit) * weight;
-    }
+    sum += Number(pesel[i]!) * weights[i]!;
   }
-  
+
   const checksum = (10 - (sum % 10)) % 10;
-  const lastDigitStr = cleanPesel[10];
-  const lastDigit = lastDigitStr ? parseInt(lastDigitStr) : 0;
-  
+  const lastDigit = Number(pesel[10]);
+
   return checksum === lastDigit;
+}
+
+export function validateNipVatUe(nipVatUe: string): boolean {
+  if (!nipVatUe || !NIP_VAT_UE_REGEX.test(nipVatUe)) {
+    return false;
+  }
+
+  const [nip] = nipVatUe.split('-');
+  return validateNIP(nip ?? '');
+}
+
+export function validateInternalId(internalId: string): boolean {
+  if (!internalId || !INTERNAL_ID_REGEX.test(internalId)) {
+    return false;
+  }
+
+  const [nip] = internalId.split('-');
+  // TODO: Add suffix checksum validation once the official algorithm is available.
+  return validateNIP(nip ?? '');
+}
+
+export function validatePeppolId(peppolId: string): boolean {
+  return Boolean(peppolId) && PEPPOL_ID_REGEX.test(peppolId);
+}
+
+export function validateFingerprint(fingerprint: string): boolean {
+  return Boolean(fingerprint) && FINGERPRINT_REGEX.test(fingerprint);
+}
+
+export function validateIsoCountryCode(countryCode: string): boolean {
+  if (!countryCode || !ISO_COUNTRY_CODE_REGEX.test(countryCode)) {
+    return false;
+  }
+
+  return ISO_3166_ALPHA2.has(countryCode);
+}
+
+export function validateIdDocument(document: IdDocument): void {
+  if (!document || !document.type || !document.number || !document.country) {
+    throw new ValidationError('IdDocument must have type, number, and country');
+  }
+
+  if (!validateIsoCountryCode(document.country)) {
+    throw new ValidationError(`Invalid IdDocument country: ${document.country}`);
+  }
+}
+
+export function validatePersonIdentifier(identifier: PersonIdentifier): void {
+  if (!identifier || !identifier.type || !identifier.value) {
+    throw new ValidationError('Person identifier must have type and value');
+  }
+
+  switch (identifier.type) {
+    case 'Nip':
+      if (!validateNIP(identifier.value)) {
+        throw new ValidationError(`Invalid NIP: ${identifier.value}`);
+      }
+      break;
+    case 'Pesel':
+      if (!validatePESEL(identifier.value)) {
+        throw new ValidationError(`Invalid PESEL: ${identifier.value}`);
+      }
+      break;
+    default:
+      throw new ValidationError(`Unknown person identifier type: ${identifier.type}`);
+  }
 }
 
 /**
@@ -92,6 +173,120 @@ export function validateContextIdentifier(identifier: ContextIdentifier): void {
     
     default:
       throw new ValidationError(`Unknown identifier type: ${type}`);
+  }
+}
+
+export function validateApiV2ContextIdentifier(identifier: ApiV2ContextIdentifier): void {
+  if (!identifier || !identifier.type || !identifier.value) {
+    throw new ValidationError('Context identifier must have type and value');
+  }
+
+  switch (identifier.type) {
+    case 'Nip':
+      if (!validateNIP(identifier.value)) {
+        throw new ValidationError(`Invalid NIP: ${identifier.value}`);
+      }
+      break;
+    case 'InternalId':
+      if (!validateInternalId(identifier.value)) {
+        throw new ValidationError(`Invalid InternalId: ${identifier.value}`);
+      }
+      break;
+    case 'NipVatUe':
+      if (!validateNipVatUe(identifier.value)) {
+        throw new ValidationError(`Invalid NipVatUe: ${identifier.value}`);
+      }
+      break;
+    case 'PeppolId':
+      if (!validatePeppolId(identifier.value)) {
+        throw new ValidationError(`Invalid PeppolId: ${identifier.value}`);
+      }
+      break;
+    default:
+      throw new ValidationError(`Unknown context identifier type: ${identifier.type}`);
+  }
+}
+
+export function validateApiV2SubjectIdentifier(identifier: ApiV2SubjectIdentifier): void {
+  if (!identifier || !identifier.type || !identifier.value) {
+    throw new ValidationError('Subject identifier must have type and value');
+  }
+
+  switch (identifier.type) {
+    case 'Nip':
+      if (!validateNIP(identifier.value)) {
+        throw new ValidationError(`Invalid NIP: ${identifier.value}`);
+      }
+      break;
+    case 'Pesel':
+      if (!validatePESEL(identifier.value)) {
+        throw new ValidationError(`Invalid PESEL: ${identifier.value}`);
+      }
+      break;
+    case 'Fingerprint':
+      if (!validateFingerprint(identifier.value)) {
+        throw new ValidationError(`Invalid Fingerprint: ${identifier.value}`);
+      }
+      break;
+    default:
+      throw new ValidationError(`Unknown subject identifier type: ${identifier.type}`);
+  }
+}
+
+export function validateApiV2EntityIdentifier(identifier: ApiV2EntityIdentifier): void {
+  if (!identifier || !identifier.type || !identifier.value) {
+    throw new ValidationError('Entity identifier must have type and value');
+  }
+
+  switch (identifier.type) {
+    case 'Nip':
+      if (!validateNIP(identifier.value)) {
+        throw new ValidationError(`Invalid NIP: ${identifier.value}`);
+      }
+      break;
+    case 'InternalId':
+      if (!validateInternalId(identifier.value)) {
+        throw new ValidationError(`Invalid InternalId: ${identifier.value}`);
+      }
+      break;
+    case 'NipVatUe':
+      if (!validateNipVatUe(identifier.value)) {
+        throw new ValidationError(`Invalid NipVatUe: ${identifier.value}`);
+      }
+      break;
+    case 'PeppolId':
+      if (!validatePeppolId(identifier.value)) {
+        throw new ValidationError(`Invalid PeppolId: ${identifier.value}`);
+      }
+      break;
+    default:
+      throw new ValidationError(`Unknown entity identifier type: ${identifier.type}`);
+  }
+}
+
+export function validateApiV2IndirectTargetIdentifier(identifier?: IndirectTargetIdentifier | null): void {
+  if (!identifier) {
+    return;
+  }
+
+  switch (identifier.type) {
+    case 'AllPartners':
+      if (identifier.value) {
+        throw new ValidationError('AllPartners identifier must not include a value');
+      }
+      break;
+    case 'Nip':
+      if (!identifier.value || !validateNIP(identifier.value)) {
+        throw new ValidationError(`Invalid NIP: ${identifier.value ?? ''}`);
+      }
+      break;
+    case 'InternalId':
+      if (!identifier.value || !validateInternalId(identifier.value)) {
+        throw new ValidationError(`Invalid InternalId: ${identifier.value ?? ''}`);
+      }
+      break;
+    default:
+      throw new ValidationError(`Unknown indirect target identifier type: ${identifier.type}`);
   }
 }
 

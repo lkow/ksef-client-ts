@@ -51,10 +51,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rimraf dist",
-    "prepublishOnly": "pnpm run clean && pnpm run build",
-    "visualize": "node scripts/visualization.mjs",
-    "visualize:enhanced": "node scripts/visualize-enhanced.mjs",
-    "visualize:official": "node scripts/visualize-official.mjs"
+    "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "keywords": [
     "ksef",
@@ -72,7 +69,6 @@
   "dependencies": {
     "node-forge": "^1.3.1",
     "qrcode": "^1.5.3",
-    "saxon-js": "^2.7.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -83,6 +79,7 @@
     "@typescript-eslint/parser": "^6.13.0",
     "@vitest/coverage-v8": "^1.0.0",
     "@vitest/ui": "^1.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^8.54.0",
     "rimraf": "^5.0.5",
     "tsc-alias": "^1.8.8",

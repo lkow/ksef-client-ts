@@ -1,7 +1,7 @@
 /**
  * KSeF API rate limiting and constraint types
  * Based on: https://github.com/CIRFMF/ksef-docs/blob/main/limity/limity-api.md
- * Updated: 2025-01-29 (per documentation dated 12.09.2025)
+ * Updated: 2025-12-29 (per documentation dated 12.09.2025)
  * 
  * IMPORTANT NOTES:
  * - Limits are calculated per (context + IP address) pair
@@ -92,6 +92,11 @@ export const KSEF_ENDPOINT_LIMITS: Record<string, EndpointRateLimit> = {
     requestsPerMinute: 8, 
     requestsPerHour: 20 
   },
+  'GET /invoices/exports/*': {
+    requestsPerSecond: 100,
+    requestsPerMinute: 600,
+    requestsPerHour: 6000
+  },
   
   // Batch Session
   'POST /sessions/batch': { 
@@ -127,7 +132,7 @@ export const KSEF_ENDPOINT_LIMITS: Record<string, EndpointRateLimit> = {
   'GET /sessions/*/invoices/*': { 
     requestsPerSecond: 30, 
     requestsPerMinute: 120, 
-    requestsPerHour: 720 
+    requestsPerHour: 1200 
   },
   'GET /sessions': { 
     requestsPerSecond: 5, 
@@ -147,7 +152,7 @@ export const KSEF_ENDPOINT_LIMITS: Record<string, EndpointRateLimit> = {
   'GET /sessions/*': { 
     requestsPerSecond: 10, 
     requestsPerMinute: 120, 
-    requestsPerHour: 720 
+    requestsPerHour: 1200 
   },
 };
 
@@ -285,11 +290,8 @@ export function getRateLimitsForEndpoint(
   path: string,
   baseConfig: RateLimitConfig = DEFAULT_RATE_LIMITS
 ): RateLimitConfig {
-  // Normalize path to match patterns (replace IDs with *)
-  const normalizedPath = path.replace(/\/[0-9a-zA-Z-]+/g, '/*');
-  const key = `${method} ${normalizedPath}`;
-  
-  const endpointLimits = KSEF_ENDPOINT_LIMITS[key];
+  const key = matchEndpointKey(method, path, Object.keys(KSEF_ENDPOINT_LIMITS));
+  const endpointLimits = key ? KSEF_ENDPOINT_LIMITS[key] : undefined;
   
   if (endpointLimits) {
     return {
@@ -301,4 +303,31 @@ export function getRateLimitsForEndpoint(
   }
   
   return baseConfig;
+}
+
+export function matchEndpointKey(
+  method: string,
+  path: string,
+  patterns: string[]
+): string | undefined {
+  const upperMethod = method.toUpperCase();
+  const actualPath = path.startsWith('/') ? path : `/${path}`;
+  
+  for (const pattern of patterns) {
+    const [patternMethod, patternPath] = pattern.split(' ');
+    if (!patternPath || patternMethod !== upperMethod) {
+      continue;
+    }
+    const regex = buildEndpointRegex(patternPath);
+    if (regex.test(actualPath)) {
+      return pattern;
+    }
+  }
+  return undefined;
+}
+
+function buildEndpointRegex(patternPath: string): RegExp {
+  const escaped = patternPath.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  const regexSource = escaped.replace(/\*/g, '[^/]+');
+  return new RegExp(`^${regexSource}$`);
 }
