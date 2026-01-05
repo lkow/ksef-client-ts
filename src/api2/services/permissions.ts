@@ -8,8 +8,7 @@ import type {
   PermissionsOperationResponse,
   PersonPermissionsGrantRequest,
   EntityPermissionsGrantRequest,
-  AttachmentStatusResponse,
-  AttachmentStatus,
+  CheckAttachmentPermissionStatusResponse,
   IndirectPermissionsGrantRequest,
   SubunitPermissionsGrantRequest,
   EuEntityAdministrationPermissionsGrantRequest,
@@ -18,7 +17,9 @@ import type {
   PersonalPermissionsQueryRequest,
   PersonPermissionsQueryRequest,
   SubunitPermissionsQueryRequest,
-  QueryPermissionsResponse
+  QueryPermissionsResponse,
+  EntityAuthorizationPermissionsQueryRequest,
+  QueryEntityAuthorizationPermissionsResponse
 } from '../types/permissions.js';
 
 export class PermissionsV2Service {
@@ -64,22 +65,9 @@ export class PermissionsV2Service {
   }
 
   async getAttachmentStatus(
-    accessToken: string,
-    nip?: string
-  ): Promise<AttachmentStatusResponse | AttachmentStatus> {
-    if (nip) {
-      const response = await this.httpClient.request<AttachmentStatusResponse>({
-        method: 'POST',
-        url: `${this.baseUrl}/permissions/attachments/status`,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: createRequestBody({ nip })
-      });
-      return response.data;
-    }
-
-    const response = await this.httpClient.request<AttachmentStatus>({
+    accessToken: string
+  ): Promise<CheckAttachmentPermissionStatusResponse> {
+    const response = await this.httpClient.request<CheckAttachmentPermissionStatusResponse>({
       method: 'GET',
       url: `${this.baseUrl}/permissions/attachments/status`,
       headers: {
@@ -283,10 +271,10 @@ export class PermissionsV2Service {
 
   async queryAuthorizationGrants(
     accessToken: string,
-    request: Record<string, unknown>,
+    request: EntityAuthorizationPermissionsQueryRequest,
     options: { pageOffset?: number; pageSize?: number } = {}
-  ): Promise<QueryPermissionsResponse<any>> {
-    const response = await this.httpClient.request<QueryPermissionsResponse<any>>({
+  ): Promise<QueryEntityAuthorizationPermissionsResponse> {
+    const response = await this.httpClient.request<QueryEntityAuthorizationPermissionsResponse>({
       method: 'POST',
       url: `${this.baseUrl}/permissions/query/authorizations/grants?pageOffset=${options.pageOffset ?? 0}&pageSize=${options.pageSize ?? 10}`,
       headers: {

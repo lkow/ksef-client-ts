@@ -1,7 +1,7 @@
 # KSeF API Limits Guide
 
 **Official Documentation**: [limity-api.md](https://github.com/CIRFMF/ksef-docs/blob/main/limity/limity-api.md)  
-**Last Updated**: 2025-01-29 (based on documentation dated 12.09.2025)
+**Last Updated**: 2025-12-29 (based on documentation dated 12.09.2025)
 
 ## Important: Test Environment
 

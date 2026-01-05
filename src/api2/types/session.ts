@@ -46,3 +46,37 @@ export interface SessionInvoicesResponse {
   continuationToken?: string | null;
   invoices: SessionInvoiceStatus[];
 }
+
+export type SessionType = 'Online' | 'Batch';
+
+export type CommonSessionStatus = 'InProgress' | 'Succeeded' | 'Failed' | 'Cancelled';
+
+export interface SessionListItem {
+  referenceNumber: string;
+  status: ApiV2ResponseStatus;
+  dateCreated: string;
+  dateUpdated?: string | null;
+  validUntil?: string | null;
+  totalInvoiceCount?: number | null;
+  successfulInvoiceCount?: number | null;
+  failedInvoiceCount?: number | null;
+}
+
+export interface SessionsQueryResponse {
+  continuationToken?: string | null;
+  sessions: SessionListItem[];
+}
+
+export interface SessionListQueryOptions {
+  sessionType: SessionType;
+  referenceNumber?: string;
+  dateCreatedFrom?: string;
+  dateCreatedTo?: string;
+  dateClosedFrom?: string;
+  dateClosedTo?: string;
+  dateModifiedFrom?: string;
+  dateModifiedTo?: string;
+  statuses?: CommonSessionStatus[];
+  continuationToken?: string;
+  pageSize?: number;
+}

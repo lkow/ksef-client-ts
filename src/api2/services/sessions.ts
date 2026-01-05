@@ -17,7 +17,9 @@ import type {
   SessionStatusResponse,
   SessionInvoicesResponse,
   SessionInvoiceStatus,
-  UpoDownloadResult
+  UpoDownloadResult,
+  SessionsQueryResponse,
+  SessionListQueryOptions
 } from '../types/session.js';
 
 export interface OpenOnlineSessionOptions {
@@ -170,6 +172,59 @@ export class SessionV2Service {
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
+    });
+
+    return response.data;
+  }
+
+  async listSessions(
+    accessToken: string,
+    options: SessionListQueryOptions
+  ): Promise<SessionsQueryResponse> {
+    const queryParams: string[] = [];
+    queryParams.push(`sessionType=${options.sessionType}`);
+    if (options.referenceNumber) {
+      queryParams.push(`referenceNumber=${encodeURIComponent(options.referenceNumber)}`);
+    }
+    if (options.dateCreatedFrom) {
+      queryParams.push(`dateCreatedFrom=${encodeURIComponent(options.dateCreatedFrom)}`);
+    }
+    if (options.dateCreatedTo) {
+      queryParams.push(`dateCreatedTo=${encodeURIComponent(options.dateCreatedTo)}`);
+    }
+    if (options.dateClosedFrom) {
+      queryParams.push(`dateClosedFrom=${encodeURIComponent(options.dateClosedFrom)}`);
+    }
+    if (options.dateClosedTo) {
+      queryParams.push(`dateClosedTo=${encodeURIComponent(options.dateClosedTo)}`);
+    }
+    if (options.dateModifiedFrom) {
+      queryParams.push(`dateModifiedFrom=${encodeURIComponent(options.dateModifiedFrom)}`);
+    }
+    if (options.dateModifiedTo) {
+      queryParams.push(`dateModifiedTo=${encodeURIComponent(options.dateModifiedTo)}`);
+    }
+    if (options.statuses && options.statuses.length > 0) {
+      options.statuses.forEach(status => {
+        queryParams.push(`statuses=${encodeURIComponent(status)}`);
+      });
+    }
+    if (options.pageSize) {
+      queryParams.push(`pageSize=${options.pageSize}`);
+    }
+
+    const query = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${accessToken}`
+    };
+    if (options.continuationToken) {
+      headers['x-continuation-token'] = options.continuationToken;
+    }
+
+    const response = await this.httpClient.request<SessionsQueryResponse>({
+      method: 'GET',
+      url: `${this.baseUrl}/sessions${query}`,
+      headers
     });
 
     return response.data;

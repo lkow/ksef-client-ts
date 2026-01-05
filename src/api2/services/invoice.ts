@@ -94,4 +94,23 @@ export class InvoiceV2Service {
 
     return response.data;
   }
+
+  async getInvoiceByKsefNumber(
+    accessToken: string,
+    ksefNumber: string
+  ): Promise<{ xml: string; hash?: string | null }> {
+    const response = await this.httpClient.request<string>({
+      method: 'GET',
+      url: `${this.baseUrl}/invoices/ksef/${ksefNumber}`,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/xml'
+      }
+    });
+
+    return {
+      xml: response.data,
+      hash: response.headers['x-ms-meta-hash'] ?? null
+    };
+  }
 }

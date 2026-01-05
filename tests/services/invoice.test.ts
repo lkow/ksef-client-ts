@@ -201,6 +201,41 @@ describe('InvoiceV2Service', () => {
     });
   });
 
+  describe('getInvoiceByKsefNumber', () => {
+    it('calls GET /invoices/ksef/{ksefNumber}', async () => {
+      mockHttpClient.mockResponse('<?xml version="1.0"?><Invoice>...</Invoice>', {
+        headers: {
+          'x-ms-meta-hash': 'invoice-hash-base64'
+        }
+      });
+
+      const service = new InvoiceV2Service(mockHttpClient as any, 'test');
+
+      const result = await service.getInvoiceByKsefNumber('token', '12345678901234567890123456789012345');
+
+      const request = mockHttpClient.getLastRequest();
+      expect(request?.method).toBe('GET');
+      expect(request?.url).toContain('/invoices/ksef/12345678901234567890123456789012345');
+      expect(request?.headers?.['Authorization']).toBe('Bearer token');
+      expect(request?.headers?.['Accept']).toBe('application/xml');
+      expect(result.xml).toBe('<?xml version="1.0"?><Invoice>...</Invoice>');
+      expect(result.hash).toBe('invoice-hash-base64');
+    });
+
+    it('handles missing hash header', async () => {
+      mockHttpClient.mockResponse('<?xml version="1.0"?><Invoice>...</Invoice>', {
+        headers: {}
+      });
+
+      const service = new InvoiceV2Service(mockHttpClient as any, 'test');
+
+      const result = await service.getInvoiceByKsefNumber('token', '12345678901234567890123456789012345');
+
+      expect(result.xml).toBe('<?xml version="1.0"?><Invoice>...</Invoice>');
+      expect(result.hash).toBeNull();
+    });
+  });
+
   describe('environment URLs', () => {
     it('uses test environment URL', async () => {
       mockHttpClient.mockResponse({});

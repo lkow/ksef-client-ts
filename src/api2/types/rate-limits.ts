@@ -20,3 +20,27 @@ export interface EffectiveApiRateLimits {
 }
 
 export type RateLimitCategory = keyof EffectiveApiRateLimits;
+
+export interface EffectiveSessionLimits {
+  maxInvoiceSizeInMB: number;
+  maxInvoiceWithAttachmentSizeInMB: number;
+  maxInvoices: number;
+}
+
+export interface EffectiveContextLimits {
+  onlineSession: EffectiveSessionLimits;
+  batchSession: EffectiveSessionLimits;
+}
+
+export interface EnrollmentEffectiveSubjectLimits {
+  maxEnrollments?: number;
+}
+
+export interface CertificateEffectiveSubjectLimits {
+  maxCertificates?: number;
+}
+
+export interface EffectiveSubjectLimits {
+  enrollment?: EnrollmentEffectiveSubjectLimits | null;
+  certificate?: CertificateEffectiveSubjectLimits | null;
+}

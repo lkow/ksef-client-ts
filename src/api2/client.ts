@@ -14,6 +14,8 @@ import { PermissionsV2Service } from './services/permissions.js';
 import { TokenService } from './services/token.js';
 import { RateLimitsService } from './services/rate-limits.js';
 import { TestDataService } from './services/test-data.js';
+import { PeppolService } from './services/peppol.js';
+import { CertificateService } from './services/certificates.js';
 import {
   encryptInvoicePayload,
   encryptInvoiceCorrectionPayload,
@@ -48,6 +50,8 @@ export class KsefApiV2Client {
   readonly permissions: PermissionsV2Service;
   readonly tokens: TokenService;
   readonly rateLimits: RateLimitsService;
+  readonly peppol: PeppolService;
+  readonly certificates: CertificateService;
   readonly testData?: TestDataService;
   readonly httpClient: HttpClient;
 
@@ -59,6 +63,8 @@ export class KsefApiV2Client {
     this.permissions = new PermissionsV2Service(this.httpClient, options.environment);
     this.tokens = new TokenService(this.httpClient, options.environment);
     this.rateLimits = new RateLimitsService(this.httpClient, options.environment);
+    this.peppol = new PeppolService(this.httpClient, options.environment);
+    this.certificates = new CertificateService(this.httpClient, options.environment);
     this.batchUploader = new BatchSessionUploader();
     if (options.environment === 'test') {
       this.testData = new TestDataService(this.httpClient, options.environment);

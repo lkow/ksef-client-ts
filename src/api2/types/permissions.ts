@@ -8,7 +8,8 @@ export type PermissionType =
   | 'CredentialsRead'
   | 'Introspection'
   | 'SubunitManage'
-  | 'EnforcementOperations';
+  | 'EnforcementOperations'
+  | 'VatUeManage';
 
 export interface EntityDetails {
   fullName: string;
@@ -102,6 +103,12 @@ export interface AttachmentStatusRequest {
   nip: string;
 }
 
+export interface CheckAttachmentPermissionStatusResponse {
+  isAttachmentAllowed: boolean;
+  revokedDate?: string | null;
+}
+
+// Legacy alias for backward compatibility
 export interface AttachmentStatusResponse {
   status: ApiV2ResponseStatus;
   isAttachmentAllowed: boolean;
@@ -155,18 +162,22 @@ export interface PermissionsOperationStatusResponse {
   referenceNumber?: string;
 }
 
+export type PermissionState = 'Active' | 'Inactive';
+
+export type EuEntityPermissionType = 'VatUeManage' | 'InvoiceWrite' | 'InvoiceRead' | 'Introspection';
+
 export interface PersonalPermissionsQueryRequest {
   contextIdentifier?: ContextIdentifier;
   targetIdentifier?: ContextIdentifier;
   permissionTypes?: PermissionType[];
-  permissionState?: 'Active' | 'Revoked';
+  permissionState?: PermissionState;
 }
 
 export interface PersonPermissionsQueryRequest {
   queryType: string;
   authorIdentifier?: SubjectIdentifier;
   permissionTypes?: PermissionType[];
-  permissionState?: 'Active' | 'Revoked';
+  permissionState?: PermissionState;
 }
 
 export interface SubunitPermissionsQueryRequest {
@@ -175,5 +186,42 @@ export interface SubunitPermissionsQueryRequest {
 
 export interface QueryPermissionsResponse<T> {
   permissions: T[];
+  hasMore: boolean;
+}
+
+export type EntityAuthorizationPermissionType = 'SelfInvoicing' | 'TaxRepresentative' | 'RRInvoicing' | 'PefInvoicing';
+
+export type QueryType = 'Granted' | 'Received';
+
+export interface EntityAuthorizationsAuthorizingEntityIdentifier {
+  type: 'Nip';
+  value: string;
+}
+
+export interface EntityAuthorizationsAuthorizedEntityIdentifier {
+  type: 'Nip' | 'PeppolId';
+  value: string;
+}
+
+export interface EntityAuthorizationPermissionsQueryRequest {
+  queryType: QueryType;
+  authorizingIdentifier?: EntityAuthorizationsAuthorizingEntityIdentifier | null;
+  authorizedIdentifier?: EntityAuthorizationsAuthorizedEntityIdentifier | null;
+  permissionTypes?: EntityAuthorizationPermissionType[] | null;
+}
+
+export interface EntityAuthorizationGrant {
+  id: string;
+  authorIdentifier?: SubjectIdentifier | null;
+  authorizedEntityIdentifier: EntityAuthorizationsAuthorizedEntityIdentifier;
+  authorizingEntityIdentifier: EntityAuthorizationsAuthorizingEntityIdentifier;
+  authorizationScope: EntityAuthorizationPermissionType;
+  description: string;
+  startDate: string;
+  subjectEntityDetails?: EntityDetails | null;
+}
+
+export interface QueryEntityAuthorizationPermissionsResponse {
+  authorizationGrants: EntityAuthorizationGrant[];
   hasMore: boolean;
 }

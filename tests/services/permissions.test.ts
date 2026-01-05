@@ -108,36 +108,20 @@ describe('PermissionsV2Service', () => {
   });
 
   describe('getAttachmentStatus', () => {
-    it('calls GET /permissions/attachments/status without NIP', async () => {
+    it('calls GET /permissions/attachments/status', async () => {
       mockHttpClient.mockResponse({
-        status: 'Active'
+        isAttachmentAllowed: true,
+        revokedDate: null
       });
 
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
-      await service.getAttachmentStatus('token');
+      const result = await service.getAttachmentStatus('token');
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('GET');
       expect(request?.url).toContain('/permissions/attachments/status');
-    });
-
-    it('calls POST /permissions/attachments/status with NIP', async () => {
-      mockHttpClient.mockResponse({
-        nip: '1234567890',
-        status: 'Active'
-      });
-
-      const service = new PermissionsV2Service(mockHttpClient as any, 'test');
-
-      await service.getAttachmentStatus('token', '1234567890');
-
-      const request = mockHttpClient.getLastRequest();
-      expect(request?.method).toBe('POST');
-      expect(request?.url).toContain('/permissions/attachments/status');
-      
-      const body = JSON.parse(request?.body!);
-      expect(body.nip).toBe('1234567890');
+      expect(result.isAttachmentAllowed).toBe(true);
     });
   });
 
@@ -275,14 +259,18 @@ describe('PermissionsV2Service', () => {
 
   describe('queryAuthorizationGrants', () => {
     it('calls POST /permissions/query/authorizations/grants', async () => {
-      mockHttpClient.mockResponse({ permissions: [] });
+      mockHttpClient.mockResponse({ authorizationGrants: [], hasMore: false });
 
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
-      await service.queryAuthorizationGrants('token', {});
+      await service.queryAuthorizationGrants('token', {
+        queryType: 'Granted'
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.url).toContain('/permissions/query/authorizations/grants');
+      expect(request?.body).toContain('queryType');
+      expect(request?.body).toContain('Granted');
     });
   });
 
