@@ -273,21 +273,17 @@ describe('CertificateService', () => {
       expect(body.certificateSerialNumber).toBe('018209160C631F1E');
     });
 
-    it('supports filtering by subject identifier', async () => {
+    it('supports filtering by expiresAfter', async () => {
       mockHttpClient.mockResponse({ certificates: [], hasMore: false });
 
       const service = new CertificateService(mockHttpClient as any, 'test');
 
       await service.queryCertificates('token', {
-        subjectIdentifier: {
-          type: 'Nip',
-          value: '1234567890'
-        }
+        expiresAfter: '2026-01-01T00:00:00+00:00'
       });
 
       const body = JSON.parse(mockHttpClient.getLastRequest()?.body!);
-      expect(body.subjectIdentifier.type).toBe('Nip');
-      expect(body.subjectIdentifier.value).toBe('1234567890');
+      expect(body.expiresAfter).toBe('2026-01-01T00:00:00+00:00');
     });
   });
 
@@ -313,4 +309,3 @@ describe('CertificateService', () => {
     });
   });
 });
-

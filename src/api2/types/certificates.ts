@@ -90,13 +90,10 @@ export interface QueryCertificatesRequest {
   name?: string | null;
   type?: KsefCertificateType | null;
   status?: CertificateListItemStatus | null;
-  subjectIdentifier?: CertificateSubjectIdentifier | null;
-  validFrom?: string | null;
-  validTo?: string | null;
+  expiresAfter?: string | null;
 }
 
 export interface QueryCertificatesResponse {
   certificates: CertificateListItem[];
   hasMore: boolean;
 }
-

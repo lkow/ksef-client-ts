@@ -19,10 +19,17 @@ describe('PermissionsV2Service', () => {
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
       await service.grantPersonPermissions('token', {
-        contextIdentifier: { type: 'Nip', value: '1234567890' },
         subjectIdentifier: { type: 'Pesel', value: '12345678901' },
-        permissions: [{ permissionType: 'InvoiceRead' }]
-      } as any);
+        permissions: ['InvoiceRead'],
+        description: 'Grant invoice read',
+        subjectDetails: {
+          subjectDetailsType: 'PersonByIdentifier',
+          personById: {
+            firstName: 'Jan',
+            lastName: 'Kowalski'
+          }
+        }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
@@ -38,14 +45,35 @@ describe('PermissionsV2Service', () => {
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
       await service.grantEntityPermissions('token', {
-        contextIdentifier: { type: 'Nip', value: '1111111111' },
-        targetIdentifier: { type: 'Nip', value: '2222222222' },
-        permissions: []
-      } as any);
+        subjectIdentifier: { type: 'Nip', value: '1111111111' },
+        permissions: [{ type: 'InvoiceRead', canDelegate: true }],
+        description: 'Grant invoice read',
+        subjectDetails: { fullName: 'Example Corp' }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
       expect(request?.url).toContain('/permissions/entities/grants');
+    });
+  });
+
+  describe('grantAuthorizationPermissions', () => {
+    it('calls POST /permissions/authorizations/grants', async () => {
+      mockHttpClient.mockResponse({ referenceNumber: 'auth-ref' });
+
+      const service = new PermissionsV2Service(mockHttpClient as any, 'test');
+
+      await service.grantAuthorizationPermissions('token', {
+        subjectIdentifier: { type: 'Nip', value: '1234567890' },
+        permission: 'SelfInvoicing',
+        description: 'Authorization grant',
+        subjectDetails: { fullName: 'Example Entity' }
+      });
+
+      const request = mockHttpClient.getLastRequest();
+      expect(request?.method).toBe('POST');
+      expect(request?.url).toContain('/permissions/authorizations/grants');
+      expect(request?.headers?.['Authorization']).toBe('Bearer token');
     });
   });
 
@@ -56,9 +84,18 @@ describe('PermissionsV2Service', () => {
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
       await service.grantIndirectPermissions('token', {
-        contextIdentifier: { type: 'Nip', value: '1234567890' },
-        targetIdentifier: { type: 'AllPartners' }
-      } as any);
+        subjectIdentifier: { type: 'Pesel', value: '12345678901' },
+        targetIdentifier: { type: 'AllPartners' },
+        permissions: ['InvoiceRead'],
+        description: 'Indirect invoice read',
+        subjectDetails: {
+          subjectDetailsType: 'PersonByIdentifier',
+          personById: {
+            firstName: 'Anna',
+            lastName: 'Nowak'
+          }
+        }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
@@ -73,8 +110,17 @@ describe('PermissionsV2Service', () => {
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
       await service.grantSubunitPermissions('token', {
-        contextIdentifier: { type: 'Nip', value: '1234567890' }
-      } as any);
+        subjectIdentifier: { type: 'Pesel', value: '12345678901' },
+        contextIdentifier: { type: 'Nip', value: '1234567890' },
+        description: 'Grant subunit admin',
+        subjectDetails: {
+          subjectDetailsType: 'PersonByIdentifier',
+          personById: {
+            firstName: 'Piotr',
+            lastName: 'Zielinski'
+          }
+        }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.url).toContain('/permissions/subunits/grants');
@@ -87,7 +133,24 @@ describe('PermissionsV2Service', () => {
 
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
-      await service.grantEuEntityAdministration('token', {} as any);
+      await service.grantEuEntityAdministration('token', {
+        subjectIdentifier: { type: 'Pesel', value: '12345678901' },
+        contextIdentifier: { type: 'Nip', value: '1234567890' },
+        description: 'Grant EU entity admin',
+        euEntityName: 'EU Entity',
+        subjectDetails: {
+          subjectDetailsType: 'PersonByFingerprintWithIdentifier',
+          personByFpWithId: {
+            firstName: 'Maria',
+            lastName: 'Kowalska',
+            identifier: { type: 'Pesel', value: '12345678901' }
+          }
+        },
+        euEntityDetails: {
+          fullName: 'EU Entity Sp. z o.o.',
+          address: 'Main Street 1, 00-001'
+        }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.url).toContain('/permissions/eu-entities/administration/grants');
@@ -100,7 +163,18 @@ describe('PermissionsV2Service', () => {
 
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
-      await service.grantEuEntityPermissions('token', {} as any);
+      await service.grantEuEntityPermissions('token', {
+        subjectIdentifier: { type: 'Fingerprint', value: 'fingerprint-value' },
+        permissions: ['InvoiceRead'],
+        description: 'Grant EU entity read',
+        subjectDetails: {
+          subjectDetailsType: 'EntityByFingerprint',
+          entityByFp: {
+            fullName: 'EU Entity Representative',
+            address: 'Main Street 1, 00-001'
+          }
+        }
+      });
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.url).toContain('/permissions/eu-entities/grants');
@@ -304,4 +378,3 @@ describe('PermissionsV2Service', () => {
     });
   });
 });
-

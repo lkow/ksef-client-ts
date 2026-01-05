@@ -13,6 +13,7 @@ import type {
   SubunitPermissionsGrantRequest,
   EuEntityAdministrationPermissionsGrantRequest,
   EuEntityPermissionsGrantRequest,
+  EntityAuthorizationPermissionsGrantRequest,
   PermissionsOperationStatusResponse,
   PersonalPermissionsQueryRequest,
   PersonPermissionsQueryRequest,
@@ -55,6 +56,22 @@ export class PermissionsV2Service {
     const response = await this.httpClient.request<PermissionsOperationResponse>({
       method: 'POST',
       url: `${this.baseUrl}/permissions/entities/grants`,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: createRequestBody(request)
+    });
+
+    return response.data;
+  }
+
+  async grantAuthorizationPermissions(
+    accessToken: string,
+    request: EntityAuthorizationPermissionsGrantRequest
+  ): Promise<PermissionsOperationResponse> {
+    const response = await this.httpClient.request<PermissionsOperationResponse>({
+      method: 'POST',
+      url: `${this.baseUrl}/permissions/authorizations/grants`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
