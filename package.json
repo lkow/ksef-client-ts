@@ -1,5 +1,5 @@
 {
-  "name": "@ksef-client-ts",
+  "name": "@ksef/client",
   "version": "1.0.0",
   "description": "TypeScript client library for KSeF (Krajowy System e-Faktur) - Poland's national e-invoicing system",
   "type": "module",
