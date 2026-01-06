@@ -199,6 +199,54 @@ describe('SessionV2Service', () => {
     });
   });
 
+  describe('listSessions', () => {
+    it('calls GET /sessions with required sessionType', async () => {
+      mockHttpClient.mockResponse({
+        sessions: [],
+        continuationToken: null
+      });
+
+      const service = new SessionV2Service(
+        mockHttpClient as any,
+        'test',
+        mockSecurityService as any
+      );
+
+      await service.listSessions('token', { sessionType: 'Online' });
+
+      const request = mockHttpClient.getLastRequest();
+      expect(request?.method).toBe('GET');
+      expect(request?.url).toContain('/sessions');
+      expect(request?.url).toContain('sessionType=Online');
+    });
+
+    it('includes filters and continuation token when provided', async () => {
+      mockHttpClient.mockResponse({ sessions: [] });
+
+      const service = new SessionV2Service(
+        mockHttpClient as any,
+        'test',
+        mockSecurityService as any
+      );
+
+      await service.listSessions('token', {
+        sessionType: 'Batch',
+        referenceNumber: 'sess-123',
+        statuses: ['InProgress', 'Succeeded'],
+        pageSize: 50,
+        continuationToken: 'cont-123'
+      });
+
+      const request = mockHttpClient.getLastRequest();
+      expect(request?.url).toContain('sessionType=Batch');
+      expect(request?.url).toContain('referenceNumber=sess-123');
+      expect(request?.url).toContain('statuses=InProgress');
+      expect(request?.url).toContain('statuses=Succeeded');
+      expect(request?.url).toContain('pageSize=50');
+      expect(request?.headers?.['x-continuation-token']).toBe('cont-123');
+    });
+  });
+
   describe('listSessionInvoices', () => {
     it('calls GET /sessions/{ref}/invoices', async () => {
       mockHttpClient.mockResponse({
@@ -403,4 +451,3 @@ describe('BatchSessionUploader', () => {
     });
   });
 });
-

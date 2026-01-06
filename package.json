@@ -1,5 +1,5 @@
 {
-  "name": "@ksef/client",
+  "name": "@ksef-client-ts",
   "version": "1.0.0",
   "description": "TypeScript client library for KSeF (Krajowy System e-Faktur) - Poland's national e-invoicing system",
   "type": "module",
@@ -51,6 +51,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rimraf dist",
+    "prepare": "npm run build",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "keywords": [
