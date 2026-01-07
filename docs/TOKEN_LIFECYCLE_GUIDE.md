@@ -324,7 +324,7 @@ const client = new KSeFClient({
 
 ## 🔗 Related Documentation
 
-- [Basic Usage Guide](../examples/basic-usage.ts)
+- [Token Management Example](../examples/05-token-management.ts)
 - [Integration Testing](INTEGRATION_TESTING.md)
 - [External Signing Guide](../EXTERNAL_SIGNING_GUIDE.md)
 - [API Reference](../README.md)
@@ -332,4 +332,3 @@ const client = new KSeFClient({
 ---
 
 This guide provides a complete understanding of the KSeF token lifecycle, enabling you to implement secure and efficient authentication patterns in your applications.
-

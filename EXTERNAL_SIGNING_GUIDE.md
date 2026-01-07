@@ -1,6 +1,6 @@
-# KSeF External Signature Delegation Guide
+# KSeF External Signature Delegation Guide (API 2.0)
 
-This guide explains how to implement secure authentication with KSeF using external signature delegation, where your system generates the authentication XML and users sign it with their own certificates or EPUAP.
+This guide explains how to implement secure authentication with KSeF API v2 using external signature delegation, where your system prepares the AuthTokenRequest XML and users sign it with their own certificates or EPUAP.
 
 ## Overview
 
@@ -11,74 +11,143 @@ The external signature delegation approach provides several advantages:
 - **Flexibility**: Supports qualified certificates, EPUAP, and other signing methods
 - **User Experience**: Users can use their existing signing tools and workflows
 
+KSeF API v2 uses the XAdES authentication flow:
+
+1. Request a challenge (`/auth/challenge`)
+2. Build and sign `AuthTokenRequest` XML (XAdES)
+3. Send signed XML to `/auth/xades-signature`
+4. Poll status and redeem tokens (`/auth/{referenceNumber}`, `/auth/token/redeem`)
+
 ## Authentication Flow
 
-### Step 1: Generate Authentication XML
+### Step 1: Request a challenge and build AuthTokenRequest XML
 
-Your system generates the XML that needs to be signed:
+Your system requests the challenge and constructs the unsigned XML for the user to sign:
 
 ```typescript
-import { createProdExternalSigningClient } from '@ksef/client';
+import { KsefApiV2Client, ContextIdentifierType } from '@ksef/client';
 
-const client = createProdExternalSigningClient({
-  type: 'nip',
-  value: '1234567890' // User's NIP
+const client = new KsefApiV2Client({ environment: 'prod' });
+const context = { type: ContextIdentifierType.NIP, value: '1234567890' };
+
+const challenge = await client.authentication.requestChallenge();
+const xmlToSign = buildUnsignedAuthTokenRequest({
+  challenge: challenge.challenge,
+  contextIdentifier: context,
+  subjectIdentifierType: 'certificateSubject'
 });
 
-// Generate XML for user to sign
-const authData = await client.generateAuthenticationXML();
-
-console.log('XML to sign:', authData.xml);
-console.log('Challenge:', authData.challenge);
-console.log('Timestamp:', authData.timestamp);
+console.log('XML to sign:', xmlToSign);
 ```
 
-### Step 2: User Signs the XML
+Use the same structure as `src/api2/auth/xades-request.ts`:
 
-The user signs the XML with their certificate or EPUAP. This can happen in several ways:
+```typescript
+import { ContextIdentifierType } from '@ksef/client';
 
-#### Option A: Qualified Certificate Signing
+type SubjectIdentifierTypeV2 = 'certificateSubject' | 'certificateFingerprint';
+
+interface BuildAuthTokenRequestParams {
+  challenge: string;
+  contextIdentifier: { type: ContextIdentifierType; value: string };
+  subjectIdentifierType: SubjectIdentifierTypeV2;
+}
+
+const AUTH_NS = 'http://ksef.mf.gov.pl/auth/token/2.0';
+const DS_NS = 'http://www.w3.org/2000/09/xmldsig#';
+
+function buildUnsignedAuthTokenRequest(params: BuildAuthTokenRequestParams): string {
+  const contextXml = buildContextIdentifier(params.contextIdentifier);
+  return `<?xml version="1.0" encoding="utf-8"?>
+<AuthTokenRequest xmlns="${AUTH_NS}" xmlns:ds="${DS_NS}">
+  <Challenge>${params.challenge}</Challenge>
+  <ContextIdentifier>
+    ${contextXml}
+  </ContextIdentifier>
+  <SubjectIdentifierType>${params.subjectIdentifierType}</SubjectIdentifierType>
+</AuthTokenRequest>`;
+}
+
+function buildContextIdentifier(context: { type: ContextIdentifierType; value: string }): string {
+  switch (context.type) {
+    case ContextIdentifierType.NIP:
+      return `<Nip>${context.value}</Nip>`;
+    case ContextIdentifierType.INTERNAL_ID:
+      return `<InternalId>${context.value}</InternalId>`;
+    case ContextIdentifierType.NIP_VAT_UE:
+      return `<NipVatUe>${context.value}</NipVatUe>`;
+    case ContextIdentifierType.PEPPOL_ID:
+      return `<PeppolId>${context.value}</PeppolId>`;
+    default:
+      throw new Error(`Unsupported context identifier type: ${context.type}`);
+  }
+}
+```
+
+### Step 2: User signs the XML (XAdES)
+
+The user signs the XML with their certificate or EPUAP. The signed XML must include an XAdES signature inside the `AuthTokenRequest` as described in `uwierzytelnianie.md`.
+
+#### Option A: Qualified certificate signing
 ```typescript
 // User's environment - they sign with their certificate
-const signedXML = await signWithQualifiedCertificate(authData.xml);
+const signedXml = await signWithQualifiedCertificate(xmlToSign);
 ```
 
-#### Option B: EPUAP Signing
+#### Option B: EPUAP signing
 ```typescript
 // User's environment - they sign with EPUAP
-const signedXML = await signWithEPUAP(authData.xml);
+const signedXml = await signWithEPUAP(xmlToSign);
 ```
 
-#### Option C: Other Trusted Signing Methods
+#### Option C: Other trusted signing methods
 ```typescript
 // User's environment - they sign with their preferred method
-const signedXML = await signWithTrustedMethod(authData.xml);
+const signedXml = await signWithTrustedMethod(xmlToSign);
 ```
 
-### Step 3: Authenticate with Signed XML
+### Step 3: Initiate XAdES authentication and redeem tokens
 
-Your system receives the signed XML and authenticates with KSeF:
+Send the signed XML to KSeF, poll the authentication status, then redeem access tokens:
 
 ```typescript
-// Authenticate with the signed XML
-const session = await client.authenticateWithSignedXML(signedXML);
+const init = await client.authentication.initiateXadesAuthentication(signedXml, undefined, {
+  verifyCertificateChain: true
+});
 
-console.log('Authentication successful:', session);
+let status = await client.authentication.getAuthenticationStatus(
+  init.referenceNumber,
+  init.authenticationToken.token
+);
+
+while (status.status.code === 100) {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  status = await client.authentication.getAuthenticationStatus(
+    init.referenceNumber,
+    init.authenticationToken.token
+  );
+}
+
+const tokens = await client.authentication.redeemTokens(init.authenticationToken.token);
+console.log('Access token:', tokens.accessToken.token);
 ```
 
-### Step 4: Perform KSeF Operations
+### Step 4: Perform KSeF operations with the access token
 
-Once authenticated, you can perform all KSeF operations:
+Once authenticated, use the `accessToken` for all KSeF operations:
 
 ```typescript
-// Submit invoice
-const result = await client.submitInvoice(invoiceXml);
+const formCode = { systemCode: 'FA (3)', schemaVersion: '1-0E', value: 'FA' } as const;
+const onlineSession = await client.createOnlineSession(tokens.accessToken.token, formCode);
 
-// Query invoices
-const invoices = await client.queryInvoices({
-  subjectType: 'SUBJECT1',
+const encrypted = client.encryptInvoice(invoiceXml, onlineSession.encryptionMaterial);
+const submission = await client.sendInvoice(tokens.accessToken.token, onlineSession.referenceNumber, encrypted);
+await client.closeOnlineSession(tokens.accessToken.token, onlineSession.referenceNumber);
+
+const invoices = await client.queryInvoiceMetadata(tokens.accessToken.token, {
+  subjectType: 'Subject1',
   dateRange: {
-    dateType: 'INVOICE_DATE',
+    dateType: 'Issue',
     from: '2024-01-01',
     to: '2024-12-31'
   }
@@ -90,56 +159,64 @@ const invoices = await client.queryInvoices({
 ### Web Application Integration
 
 ```typescript
-// API endpoint to generate authentication XML
-app.post('/api/ksef/generate-auth', async (req, res) => {
+import { KsefApiV2Client, ContextIdentifierType } from '@ksef/client';
+
+async function waitForAuthCompletion(client: KsefApiV2Client, init: { referenceNumber: string; authenticationToken: { token: string } }) {
+  let status = await client.authentication.getAuthenticationStatus(
+    init.referenceNumber,
+    init.authenticationToken.token
+  );
+
+  while (status.status.code === 100) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    status = await client.authentication.getAuthenticationStatus(
+      init.referenceNumber,
+      init.authenticationToken.token
+    );
+  }
+
+  if (status.status.code !== 200) {
+    throw new Error(`Authentication failed: ${status.status.description} (${status.status.code})`);
+  }
+}
+
+// API endpoint to generate AuthTokenRequest XML
+app.post('/api/ksef/auth/prepare', async (req, res) => {
   const { userNip } = req.body;
-  
-  const client = createProdExternalSigningClient({
-    type: 'nip',
-    value: userNip
-  });
+
+  const client = new KsefApiV2Client({ environment: 'prod' });
+  const context = { type: ContextIdentifierType.NIP, value: userNip };
 
   try {
-    const authData = await client.generateAuthenticationXML();
-    
-    res.json({
-      success: true,
-      xmlToSign: authData.xml,
-      challenge: authData.challenge,
-      timestamp: authData.timestamp
+    const challenge = await client.authentication.requestChallenge();
+    const xmlToSign = buildUnsignedAuthTokenRequest({
+      challenge: challenge.challenge,
+      contextIdentifier: context,
+      subjectIdentifierType: 'certificateSubject'
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+
+    res.json({ success: true, xmlToSign });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // API endpoint to authenticate with signed XML
-app.post('/api/ksef/authenticate', async (req, res) => {
-  const { userNip, signedXML } = req.body;
-  
-  const client = createProdExternalSigningClient({
-    type: 'nip',
-    value: userNip
-  });
+app.post('/api/ksef/auth/complete', async (req, res) => {
+  const { userNip, signedXml } = req.body;
+
+  const client = new KsefApiV2Client({ environment: 'prod' });
 
   try {
-    const session = await client.authenticateWithSignedXML(signedXML);
-    
-    // Store session for future operations
-    await storeUserSession(userNip, session);
-    
-    res.json({
-      success: true,
-      session: session
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    const init = await client.authentication.initiateXadesAuthentication(signedXml);
+    await waitForAuthCompletion(client, init);
+    const tokens = await client.authentication.redeemTokens(init.authenticationToken.token);
+
+    await storeUserTokens(userNip, tokens);
+
+    res.json({ success: true, tokens });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 ```
@@ -147,69 +224,81 @@ app.post('/api/ksef/authenticate', async (req, res) => {
 ### AWS Lambda Integration
 
 ```typescript
-// Lambda function for generating authentication XML
-export const generateAuthXML = async (event: any) => {
+import { KsefApiV2Client, ContextIdentifierType } from '@ksef/client';
+
+async function waitForAuthCompletion(client: KsefApiV2Client, init: { referenceNumber: string; authenticationToken: { token: string } }) {
+  let status = await client.authentication.getAuthenticationStatus(
+    init.referenceNumber,
+    init.authenticationToken.token
+  );
+
+  while (status.status.code === 100) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    status = await client.authentication.getAuthenticationStatus(
+      init.referenceNumber,
+      init.authenticationToken.token
+    );
+  }
+
+  if (status.status.code !== 200) {
+    throw new Error(`Authentication failed: ${status.status.description} (${status.status.code})`);
+  }
+}
+
+// Lambda function for generating AuthTokenRequest XML
+export const generateAuthXml = async (event: any) => {
   const { userNip } = event;
-  
-  const client = createProdExternalSigningClient({
-    type: 'nip',
-    value: userNip
-  });
+
+  const client = new KsefApiV2Client({ environment: 'prod' });
+  const context = { type: ContextIdentifierType.NIP, value: userNip };
 
   try {
-    const authData = await client.generateAuthenticationXML();
-    
+    const challenge = await client.authentication.requestChallenge();
+    const xmlToSign = buildUnsignedAuthTokenRequest({
+      challenge: challenge.challenge,
+      contextIdentifier: context,
+      subjectIdentifierType: 'certificateSubject'
+    });
+
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        xmlToSign: authData.xml,
-        challenge: authData.challenge,
-        timestamp: authData.timestamp
-      })
+      body: JSON.stringify({ success: true, xmlToSign })
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: error.message
-      })
+      body: JSON.stringify({ success: false, error: error.message })
     };
   }
 };
 
 // Lambda function for processing signed XML
-export const processSignedXML = async (event: any) => {
-  const { userNip, signedXML, invoiceXml } = event;
-  
-  const client = createProdExternalSigningClient({
-    type: 'nip',
-    value: userNip
-  });
+export const processSignedXml = async (event: any) => {
+  const { userNip, signedXml, invoiceXml } = event;
+
+  const client = new KsefApiV2Client({ environment: 'prod' });
 
   try {
-    // Authenticate with signed XML
-    const session = await client.authenticateWithSignedXML(signedXML);
-    
-    // Submit invoice
-    const result = await client.submitInvoice(invoiceXml);
-    
+    const init = await client.authentication.initiateXadesAuthentication(signedXml);
+    await waitForAuthCompletion(client, init);
+    const tokens = await client.authentication.redeemTokens(init.authenticationToken.token);
+
+    const formCode = { systemCode: 'FA (3)', schemaVersion: '1-0E', value: 'FA' } as const;
+    const onlineSession = await client.createOnlineSession(tokens.accessToken.token, formCode);
+    const encrypted = client.encryptInvoice(invoiceXml, onlineSession.encryptionMaterial);
+    const result = await client.sendInvoice(tokens.accessToken.token, onlineSession.referenceNumber, encrypted);
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        ksefReferenceNumber: result.ksefReferenceNumber,
-        acquisitionTimestamp: result.acquisitionTimestamp
+        referenceNumber: result.referenceNumber
       })
     };
-  } catch (error) {
+  } catch (error: any) {
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        success: false,
-        error: error.message
-      })
+      body: JSON.stringify({ success: false, error: error.message })
     };
   }
 };
@@ -220,47 +309,42 @@ export const processSignedXML = async (event: any) => {
 ### Frontend JavaScript Example
 
 ```javascript
-// Generate authentication XML
-async function generateAuthXML(userNip) {
-  const response = await fetch('/api/ksef/generate-auth', {
+// Generate AuthTokenRequest XML
+async function generateAuthXml(userNip) {
+  const response = await fetch('/api/ksef/auth/prepare', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userNip })
   });
-  
+
   const data = await response.json();
-  
+
   if (data.success) {
-    // Display XML to user for signing
     document.getElementById('xml-to-sign').textContent = data.xmlToSign;
     document.getElementById('signing-section').style.display = 'block';
   } else {
-    alert('Failed to generate authentication XML: ' + data.error);
+    alert('Failed to generate AuthTokenRequest XML: ' + data.error);
   }
 }
 
 // Handle user signing
 async function handleUserSigning() {
   const xmlToSign = document.getElementById('xml-to-sign').textContent;
-  
-  // User signs the XML (this would integrate with their signing tool)
-  const signedXML = await userSignXML(xmlToSign);
-  
-  // Submit signed XML to your system
-  const response = await fetch('/api/ksef/authenticate', {
+  const signedXml = await userSignXml(xmlToSign);
+
+  const response = await fetch('/api/ksef/auth/complete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       userNip: document.getElementById('user-nip').value,
-      signedXML: signedXML
+      signedXml: signedXml
     })
   });
-  
+
   const data = await response.json();
-  
+
   if (data.success) {
     alert('Authentication successful!');
-    // Proceed with KSeF operations
   } else {
     alert('Authentication failed: ' + data.error);
   }
@@ -274,38 +358,34 @@ async function handleUserSigning() {
 Always validate the signed XML before submitting to KSeF:
 
 ```typescript
-// Validate signed XML structure
-function validateSignedXML(xml: string): boolean {
+function validateSignedXml(xml: string): boolean {
   const requiredElements = [
-    '<InitSessionSignedRequest',
-    '<Context>',
-    '<Signature',
-    '<SignatureValue>',
-    '<X509Certificate>'
+    '<AuthTokenRequest',
+    '<Challenge>',
+    '<ContextIdentifier>',
+    '<SubjectIdentifierType>',
+    '<ds:Signature',
+    '<ds:SignatureValue>',
+    '<ds:X509Certificate>'
   ];
-  
-  return requiredElements.every(element => xml.includes(element));
+
+  return requiredElements.every((element) => xml.includes(element));
 }
 ```
 
-### Session Management
+### Token Management
 
-Store sessions securely and implement proper session management:
+Store tokens securely and implement proper lifecycle handling:
 
 ```typescript
-// Store session securely
-async function storeUserSession(userNip: string, session: SessionToken) {
-  const encryptedSession = await encryptSession(session);
-  await database.storeSession(userNip, encryptedSession);
+async function storeUserTokens(userNip: string, tokens: { accessToken: any; refreshToken: any }) {
+  const encryptedTokens = await encryptTokens(tokens);
+  await database.storeTokens(userNip, encryptedTokens);
 }
 
-// Retrieve session for operations
-async function getStoredSession(userNip: string): Promise<SessionToken | null> {
-  const encryptedSession = await database.getSession(userNip);
-  if (encryptedSession) {
-    return await decryptSession(encryptedSession);
-  }
-  return null;
+async function getStoredTokens(userNip: string) {
+  const encryptedTokens = await database.getTokens(userNip);
+  return encryptedTokens ? decryptTokens(encryptedTokens) : null;
 }
 ```
 
@@ -315,49 +395,49 @@ Implement comprehensive error handling:
 
 ```typescript
 try {
-  const session = await client.authenticateWithSignedXML(signedXML);
-} catch (error) {
-  if (error instanceof AuthenticationError) {
-    // Handle authentication-specific errors
+  const init = await client.authentication.initiateXadesAuthentication(signedXml);
+  const tokens = await client.authentication.redeemTokens(init.authenticationToken.token);
+} catch (error: any) {
+  if (error?.name === 'AuthenticationError') {
     console.error('Authentication failed:', error.message);
-  } else if (error instanceof ProcessError) {
-    // Handle KSeF process errors
+  } else if (error?.name === 'ValidationError') {
+    console.error('Invalid AuthTokenRequest XML:', error.message);
+  } else if (error?.name === 'ProcessError') {
     console.error('KSeF process error:', error.message);
   } else {
-    // Handle other errors
-    console.error('Unexpected error:', error.message);
+    console.error('Unexpected error:', error);
   }
 }
 ```
 
 ## Best Practices
 
-1. **Always validate signed XML** before submitting to KSeF
-2. **Implement proper session management** with encryption
-3. **Handle errors gracefully** with user-friendly messages
-4. **Log authentication attempts** for audit purposes
-5. **Implement rate limiting** to prevent abuse
-6. **Use HTTPS** for all communications
-7. **Store sensitive data encrypted** at rest and in transit
+1. **Persist the challenge** and tie it to the user session to prevent replay.
+2. **Validate signed XML** for structure and required namespaces before sending.
+3. **Poll and redeem quickly**; `authenticationToken` is short-lived.
+4. **Store access and refresh tokens securely** and rotate them on schedule.
+5. **Use HTTPS** for all communications.
+6. **Log authentication attempts** for audit purposes.
+7. **Apply rate limiting** to protect the auth endpoints.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Invalid XML Structure**: Ensure the signed XML contains all required elements
-2. **Certificate Issues**: Verify the user's certificate is valid and authorized
-3. **Timestamp Issues**: Check that the timestamp is within acceptable range
-4. **Network Issues**: Ensure proper connectivity to KSeF endpoints
+1. **Invalid XML or signature**: Verify the XAdES signature matches the `AuthTokenRequest` content.
+2. **Expired authentication token**: Redeem tokens soon after initialization.
+3. **Certificate issues**: Ensure the certificate chain is valid and authorized.
+4. **Clock skew**: Keep system time in sync (NTP) to avoid validation errors.
 
 ### Debug Information
 
-Enable debug logging to troubleshoot issues:
+Wrap the HTTP client for request/response logging if you need deeper diagnostics:
 
 ```typescript
-const client = createProdExternalSigningClient({
-  type: 'nip',
-  value: userNip
-});
+import { HttpClient, KsefApiV2Client } from '@ksef/client';
+
+const httpClient = new HttpClient({ timeout: 60000 });
+const client = new KsefApiV2Client({ environment: 'test', httpClient });
 ```
 
-This approach provides a secure, flexible, and user-friendly way to integrate with KSeF while maintaining proper security practices and user control over their authentication credentials. 
+This approach provides a secure, flexible, and user-friendly way to integrate with KSeF while keeping the XAdES signing in the user's environment.
