@@ -49,7 +49,7 @@ export function buildSignedAuthTokenRequest(
   return requestWithoutSignature.replace('</AuthTokenRequest>', `${signatureXml}\n</AuthTokenRequest>`);
 }
 
-function buildUnsignedAuthTokenRequest(params: BuildAuthTokenRequestParams): string {
+export function buildUnsignedAuthTokenRequest(params: BuildAuthTokenRequestParams): string {
   const contextXml = buildContextIdentifier(params.contextIdentifier);
   return `<?xml version="1.0" encoding="utf-8"?>
 <AuthTokenRequest xmlns="${AUTH_NAMESPACE}" xmlns:ds="${DS_NS}">
