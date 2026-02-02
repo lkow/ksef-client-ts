@@ -113,14 +113,19 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
     const fingerprint = md.sha256.create();
     fingerprint.update(asn1.toDer(pki.certificateToAsn1(certificate)).getBytes());
     
-    return {
+    const parsed: ParsedCertificate = {
       certificate,
-      privateKey,
       privateKeyPem,
       subject,
       issuer,
       fingerprint: fingerprint.digest().toHex()
     };
+
+    if (privateKey) {
+      parsed.privateKey = privateKey;
+    }
+
+    return parsed;
   } catch (error) {
     throw new Error(`Failed to parse certificate: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
