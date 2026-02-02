@@ -2,14 +2,15 @@
  * Cryptographic utilities for KSeF operations
  */
 
-import { createHash, createPrivateKey, sign as cryptoSign } from 'node:crypto';
-// Import node-forge as namespace for ESM compatibility
-import * as forge from 'node-forge';
+import { createHash, createPrivateKey, sign as cryptoSign, X509Certificate } from 'node:crypto';
+// Import node-forge default export for ESM interop
+import forge from 'node-forge';
 const { pki, pkcs12, asn1, util, md } = forge;
 import type { CertificateCredentials } from '@/types/auth.js';
 
 export interface ParsedCertificate {
-  certificate: forge.pki.Certificate;
+  certificate?: forge.pki.Certificate;
+  certificatePem: string;
   privateKey?: forge.pki.PrivateKey;
   privateKeyPem: string;
   subject: string;
@@ -22,14 +23,26 @@ export interface ParsedCertificate {
  */
 export function parseCertificate(credentials: CertificateCredentials): ParsedCertificate {
   try {
-    let certificate: forge.pki.Certificate;
+    let certificate: forge.pki.Certificate | undefined;
     let privateKey: forge.pki.PrivateKey | undefined;
+    let certificatePem: string | undefined;
     let privateKeyPem: string | undefined;
+    let x509: X509Certificate | undefined;
 
     if (typeof credentials.certificate === 'string') {
       // Handle PEM format
       if (credentials.certificate.includes('-----BEGIN CERTIFICATE-----')) {
-        certificate = pki.certificateFromPem(credentials.certificate);
+        certificatePem = credentials.certificate;
+        try {
+          certificate = pki.certificateFromPem(credentials.certificate);
+        } catch {
+          certificate = undefined;
+        }
+        try {
+          x509 = new X509Certificate(certificatePem);
+        } catch {
+          x509 = undefined;
+        }
         
         if (credentials.privateKey) {
           const resolvedPrivateKeyPem = typeof credentials.privateKey === 'string' 
@@ -71,6 +84,12 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
         } catch (error) {
           throw new Error('Failed to convert private key to PEM. Provide the private key separately for EC certificates.');
         }
+        try {
+          certificatePem = pki.certificateToPem(certificate);
+          x509 = new X509Certificate(certificatePem);
+        } catch {
+          x509 = undefined;
+        }
       }
     } else {
       // Handle Buffer input (P12/PFX)
@@ -97,29 +116,59 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
       } catch (error) {
         throw new Error('Failed to convert private key to PEM. Provide the private key separately for EC certificates.');
       }
+      try {
+        certificatePem = pki.certificateToPem(certificate);
+        x509 = new X509Certificate(certificatePem);
+      } catch {
+        x509 = undefined;
+      }
+    }
+
+    if (!certificatePem) {
+      throw new Error('Certificate PEM could not be resolved');
     }
 
     if (!privateKeyPem) {
       throw new Error('Private key PEM could not be resolved');
     }
 
-    const subject = certificate.subject.getField('CN')?.value || 
-                   certificate.subject.getField('SERIALNUMBER')?.value || 
-                   'Unknown';
+    if (!certificate && !x509) {
+      throw new Error('Failed to parse certificate contents');
+    }
+
+    const subject = certificate
+      ? certificate.subject.getField('CN')?.value || 
+        certificate.subject.getField('SERIALNUMBER')?.value || 
+        'Unknown'
+      : x509
+        ? extractDnField(x509.subject, ['CN', 'SERIALNUMBER']) ?? 'Unknown'
+        : 'Unknown';
     
-    const issuer = certificate.issuer.getField('CN')?.value || 'Unknown';
+    const issuer = certificate
+      ? certificate.issuer.getField('CN')?.value || 'Unknown'
+      : x509
+        ? extractDnField(x509.issuer, ['CN']) ?? 'Unknown'
+        : 'Unknown';
     
-    // Generate fingerprint
-    const fingerprint = md.sha256.create();
-    fingerprint.update(asn1.toDer(pki.certificateToAsn1(certificate)).getBytes());
-    
+    const fingerprint = x509
+      ? createHash('sha256').update(x509.raw).digest('hex')
+      : (() => {
+          const hash = md.sha256.create();
+          hash.update(asn1.toDer(pki.certificateToAsn1(certificate!)).getBytes());
+          return hash.digest().toHex();
+        })();
+
     const parsed: ParsedCertificate = {
-      certificate,
+      certificatePem,
       privateKeyPem,
       subject,
       issuer,
-      fingerprint: fingerprint.digest().toHex()
+      fingerprint
     };
+
+    if (certificate) {
+      parsed.certificate = certificate;
+    }
 
     if (privateKey) {
       parsed.privateKey = privateKey;
@@ -202,11 +251,7 @@ function createXAdESSignature(
   parsedCert: ParsedCertificate
 ): string {
   const timestamp = new Date().toISOString();
-  const certificatePem = pki.certificateToPem(parsedCert.certificate);
-  const certificateBase64 = certificatePem
-    .replace(/-----BEGIN CERTIFICATE-----/g, '')
-    .replace(/-----END CERTIFICATE-----/g, '')
-    .replace(/\n/g, '');
+  const certificateBase64 = stripCertificatePem(parsedCert.certificatePem);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <InitSessionSignedRequest xmlns="http://ksef.mf.gov.pl/schema/gtw/svc/online/auth/request/202310/v1">
@@ -265,6 +310,23 @@ function loadPrivateKey(privateKeyPem: string, passphrase?: string) {
   }
 }
 
+function stripCertificatePem(certificatePem: string): string {
+  return certificatePem
+    .replace(/-----BEGIN CERTIFICATE-----/g, '')
+    .replace(/-----END CERTIFICATE-----/g, '')
+    .replace(/\r?\n/g, '');
+}
+
+function extractDnField(subject: string, keys: string[]): string | null {
+  for (const key of keys) {
+    const match = subject.match(new RegExp(`(?:^|[\\s,/])${key}=([^,\\/]+)`));
+    if (match?.[1]) {
+      return match[1].trim();
+    }
+  }
+  return null;
+}
+
 /**
  * Encrypt token with timestamp for KSeF token authentication
  */
@@ -281,25 +343,42 @@ export function encryptTokenWithTimestamp(token: string, timestamp: string): str
 export function validateCertificate(parsedCert: ParsedCertificate): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const now = new Date();
+  let validFrom: Date | null = null;
+  let validTo: Date | null = null;
+
+  if (parsedCert.certificate) {
+    validFrom = parsedCert.certificate.validity.notBefore;
+    validTo = parsedCert.certificate.validity.notAfter;
+  } else {
+    try {
+      const x509 = new X509Certificate(parsedCert.certificatePem);
+      validFrom = new Date(x509.validFrom);
+      validTo = new Date(x509.validTo);
+    } catch {
+      // ignore
+    }
+  }
 
   // Check if certificate is not expired
-  if (parsedCert.certificate.validity.notAfter < now) {
+  if (validTo && validTo < now) {
     errors.push('Certificate has expired');
   }
 
   // Check if certificate is not yet valid
-  if (parsedCert.certificate.validity.notBefore > now) {
+  if (validFrom && validFrom > now) {
     errors.push('Certificate is not yet valid');
   }
 
   // Check for required key usage (simplified check)
-  try {
-    const keyUsage = parsedCert.certificate.getExtension('keyUsage');
-    if (keyUsage && typeof keyUsage === 'object' && 'digitalSignature' in keyUsage && !(keyUsage as any).digitalSignature) {
-      errors.push('Certificate does not have digital signature capability');
+  if (parsedCert.certificate) {
+    try {
+      const keyUsage = parsedCert.certificate.getExtension('keyUsage');
+      if (keyUsage && typeof keyUsage === 'object' && 'digitalSignature' in keyUsage && !(keyUsage as any).digitalSignature) {
+        errors.push('Certificate does not have digital signature capability');
+      }
+    } catch (error) {
+      // Key usage extension check failed, but we'll allow it to pass
     }
-  } catch (error) {
-    // Key usage extension check failed, but we'll allow it to pass
   }
 
   return {

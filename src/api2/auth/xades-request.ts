@@ -1,6 +1,4 @@
 import { createHash, createPrivateKey, sign as cryptoSign } from 'node:crypto';
-import * as forge from 'node-forge';
-const { pki } = forge;
 import type { CertificateCredentials } from '@/types/auth.js';
 import { parseCertificate, type ParsedCertificate } from '@/utils/crypto.js';
 import type { ContextIdentifier } from '../types/common.js';
@@ -27,7 +25,7 @@ export function buildSignedAuthTokenRequest(
   const signedInfoDigest = sha256Base64(Buffer.from(canonical, 'utf8'));
   const passphrase = credentials.privateKeyPassword ?? credentials.password;
   const { signatureValue, signatureMethod } = createXmlSignature(canonical, parsedCertificate, passphrase);
-  const certificateBase64 = encodeCertificate(parsedCertificate.certificate);
+  const certificateBase64 = encodeCertificate(parsedCertificate.certificatePem);
 
   const signatureXml = `
   <ds:Signature xmlns:ds="${DS_NS}">
@@ -119,10 +117,9 @@ function loadPrivateKey(privateKeyPem: string, passphrase?: string) {
   }
 }
 
-function encodeCertificate(certificate: forge.pki.Certificate): string {
-  const certificatePem = pki.certificateToPem(certificate);
+function encodeCertificate(certificatePem: string): string {
   return certificatePem
     .replace(/-----BEGIN CERTIFICATE-----/g, '')
     .replace(/-----END CERTIFICATE-----/g, '')
-    .replace(/\n/g, '');
+    .replace(/\r?\n/g, '');
 }
