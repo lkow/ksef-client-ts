@@ -1,4 +1,4 @@
-import { createSign, createHash } from 'node:crypto';
+import { createHash, createPrivateKey, sign as cryptoSign } from 'node:crypto';
 import * as forge from 'node-forge';
 const { pki } = forge;
 import type { CertificateCredentials } from '@/types/auth.js';
@@ -25,14 +25,15 @@ export function buildSignedAuthTokenRequest(
   const canonical = canonicalizeXml(requestWithoutSignature);
 
   const signedInfoDigest = sha256Base64(Buffer.from(canonical, 'utf8'));
-  const signatureValue = createXmlSignature(canonical, parsedCertificate);
+  const passphrase = credentials.privateKeyPassword ?? credentials.password;
+  const { signatureValue, signatureMethod } = createXmlSignature(canonical, parsedCertificate, passphrase);
   const certificateBase64 = encodeCertificate(parsedCertificate.certificate);
 
   const signatureXml = `
   <ds:Signature xmlns:ds="${DS_NS}">
     <ds:SignedInfo>
       <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-      <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256"/>
+      <ds:SignatureMethod Algorithm="${signatureMethod}"/>
       <ds:Reference URI="">
         <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
         <ds:DigestValue>${signedInfoDigest}</ds:DigestValue>
@@ -86,11 +87,36 @@ function sha256Base64(buffer: Buffer): string {
   return hash.digest('base64');
 }
 
-function createXmlSignature(content: string, parsedCert: ParsedCertificate): string {
-  const signer = createSign('RSA-SHA256');
-  signer.update(content);
-  const privateKeyPem = pki.privateKeyToPem(parsedCert.privateKey);
-  return signer.sign(privateKeyPem, 'base64');
+function createXmlSignature(
+  content: string,
+  parsedCert: ParsedCertificate,
+  passphrase?: string
+): { signatureValue: string; signatureMethod: string } {
+  const keyObject = loadPrivateKey(parsedCert.privateKeyPem, passphrase);
+  const isEc = keyObject.asymmetricKeyType === 'ec';
+  const signatureMethod = isEc
+    ? 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256'
+    : 'http://www.w3.org/2000/09/xmldsig#rsa-sha256';
+
+  const signatureValue = cryptoSign(
+    isEc ? 'sha256' : 'RSA-SHA256',
+    Buffer.from(content, 'utf8'),
+    isEc ? { key: keyObject, dsaEncoding: 'der' } : { key: keyObject }
+  ).toString('base64');
+
+  return { signatureValue, signatureMethod };
+}
+
+function loadPrivateKey(privateKeyPem: string, passphrase?: string) {
+  if (!passphrase) {
+    return createPrivateKey({ key: privateKeyPem });
+  }
+
+  try {
+    return createPrivateKey({ key: privateKeyPem, passphrase });
+  } catch {
+    return createPrivateKey({ key: privateKeyPem });
+  }
 }
 
 function encodeCertificate(certificate: forge.pki.Certificate): string {

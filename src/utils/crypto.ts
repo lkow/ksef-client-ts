@@ -2,7 +2,7 @@
  * Cryptographic utilities for KSeF operations
  */
 
-import { createHash, createSign } from 'node:crypto';
+import { createHash, createPrivateKey, sign as cryptoSign } from 'node:crypto';
 // Import node-forge as namespace for ESM compatibility
 import * as forge from 'node-forge';
 const { pki, pkcs12, asn1, util, md } = forge;
@@ -10,7 +10,8 @@ import type { CertificateCredentials } from '@/types/auth.js';
 
 export interface ParsedCertificate {
   certificate: forge.pki.Certificate;
-  privateKey: forge.pki.PrivateKey;
+  privateKey?: forge.pki.PrivateKey;
+  privateKeyPem: string;
   subject: string;
   issuer: string;
   fingerprint: string;
@@ -22,7 +23,8 @@ export interface ParsedCertificate {
 export function parseCertificate(credentials: CertificateCredentials): ParsedCertificate {
   try {
     let certificate: forge.pki.Certificate;
-    let privateKey: forge.pki.PrivateKey;
+    let privateKey: forge.pki.PrivateKey | undefined;
+    let privateKeyPem: string | undefined;
 
     if (typeof credentials.certificate === 'string') {
       // Handle PEM format
@@ -30,10 +32,16 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
         certificate = pki.certificateFromPem(credentials.certificate);
         
         if (credentials.privateKey) {
-          const privateKeyPem = typeof credentials.privateKey === 'string' 
+          const resolvedPrivateKeyPem = typeof credentials.privateKey === 'string' 
             ? credentials.privateKey 
             : credentials.privateKey.toString();
-          privateKey = pki.privateKeyFromPem(privateKeyPem);
+          privateKeyPem = resolvedPrivateKeyPem;
+          try {
+            privateKey = pki.privateKeyFromPem(privateKeyPem);
+          } catch {
+            // EC keys are not always supported by forge; keep PEM for crypto.sign
+            privateKey = undefined;
+          }
         } else {
           throw new Error('Private key is required for PEM certificates');
         }
@@ -58,6 +66,11 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
         
         certificate = certBags[certBagType]![0]!.cert!;
         privateKey = keyBags[keyBagType]![0]!.key!;
+        try {
+          privateKeyPem = pki.privateKeyToPem(privateKey);
+        } catch (error) {
+          throw new Error('Failed to convert private key to PEM. Provide the private key separately for EC certificates.');
+        }
       }
     } else {
       // Handle Buffer input (P12/PFX)
@@ -79,6 +92,15 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
       
       certificate = certBags[certBagType]![0]!.cert!;
       privateKey = keyBags[keyBagType]![0]!.key!;
+      try {
+        privateKeyPem = pki.privateKeyToPem(privateKey);
+      } catch (error) {
+        throw new Error('Failed to convert private key to PEM. Provide the private key separately for EC certificates.');
+      }
+    }
+
+    if (!privateKeyPem) {
+      throw new Error('Private key PEM could not be resolved');
     }
 
     const subject = certificate.subject.getField('CN')?.value || 
@@ -94,6 +116,7 @@ export function parseCertificate(credentials: CertificateCredentials): ParsedCer
     return {
       certificate,
       privateKey,
+      privateKeyPem,
       subject,
       issuer,
       fingerprint: fingerprint.digest().toHex()
@@ -134,22 +157,17 @@ export function fromBase64(content: string): Buffer {
  */
 export function createXMLSignature(
   xmlContent: string,
-  parsedCert: ParsedCertificate
+  parsedCert: ParsedCertificate,
+  passphrase?: string
 ): string {
   try {
     // Create canonical XML for signing
     const canonicalXml = canonicalizeXML(xmlContent);
     
-    // Generate signature
-    const sign = createSign('RSA-SHA256');
-    sign.update(canonicalXml);
-    
-    // Convert forge private key to Node.js format
-    const privateKeyPem = pki.privateKeyToPem(parsedCert.privateKey);
-    const signature = sign.sign(privateKeyPem, 'base64');
+    const { signature, signatureMethod } = signXmlContent(canonicalXml, parsedCert, passphrase);
     
     // Create signed XML with XAdES structure
-    const signedXml = createXAdESSignature(canonicalXml, signature, parsedCert);
+    const signedXml = createXAdESSignature(canonicalXml, signature, signatureMethod, parsedCert);
     
     return signedXml;
   } catch (error) {
@@ -175,6 +193,7 @@ function canonicalizeXML(xml: string): string {
 function createXAdESSignature(
   content: string,
   signature: string,
+  signatureMethod: string,
   parsedCert: ParsedCertificate
 ): string {
   const timestamp = new Date().toISOString();
@@ -190,7 +209,7 @@ function createXAdESSignature(
   <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
     <SignedInfo>
       <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-      <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+      <SignatureMethod Algorithm="${signatureMethod}"/>
       <Reference URI="">
         <Transforms>
           <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
@@ -207,6 +226,38 @@ function createXAdESSignature(
     </KeyInfo>
   </Signature>
 </InitSessionSignedRequest>`;
+}
+
+function signXmlContent(
+  content: string,
+  parsedCert: ParsedCertificate,
+  passphrase?: string
+): { signature: string; signatureMethod: string } {
+  const keyObject = loadPrivateKey(parsedCert.privateKeyPem, passphrase);
+  const isEc = keyObject.asymmetricKeyType === 'ec';
+  const signatureMethod = isEc
+    ? 'http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256'
+    : 'http://www.w3.org/2000/09/xmldsig#rsa-sha256';
+
+  const signature = cryptoSign(
+    isEc ? 'sha256' : 'RSA-SHA256',
+    Buffer.from(content, 'utf8'),
+    isEc ? { key: keyObject, dsaEncoding: 'der' } : { key: keyObject }
+  ).toString('base64');
+
+  return { signature, signatureMethod };
+}
+
+function loadPrivateKey(privateKeyPem: string, passphrase?: string) {
+  if (!passphrase) {
+    return createPrivateKey({ key: privateKeyPem });
+  }
+
+  try {
+    return createPrivateKey({ key: privateKeyPem, passphrase });
+  } catch {
+    return createPrivateKey({ key: privateKeyPem });
+  }
 }
 
 /**
