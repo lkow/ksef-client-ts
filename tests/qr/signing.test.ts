@@ -100,6 +100,62 @@ describe('QR Signing', () => {
 
       expect(signature).toBeTruthy();
     });
+
+    it('handles encrypted PKCS#8 EC key and produces IEEE P1363 format', () => {
+      // Generate encrypted EC key (common format from KSeF certificate enrollment)
+      const password = 'test-password';
+      const encryptedEcKey = generateKeyPairSync('ec', {
+        namedCurve: 'prime256v1',
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { 
+          type: 'pkcs8', 
+          format: 'pem',
+          cipher: 'aes-256-cbc',
+          passphrase: password
+        }
+      });
+
+      // Verify key format
+      expect(encryptedEcKey.privateKey).toContain('BEGIN ENCRYPTED PRIVATE KEY');
+
+      const data = 'qr-test.ksef.mf.gov.pl/certificate/Nip/1234567890/1234567890/SERIAL123/hashvalue';
+      const signature = signAuto(data, encryptedEcKey.privateKey, password);
+
+      expect(signature).toBeTruthy();
+
+      // Decode and verify IEEE P1363 format (64 bytes for P-256)
+      const base64 = signature.replace(/-/g, '+').replace(/_/g, '/');
+      const buffer = Buffer.from(base64, 'base64');
+      
+      // Must be exactly 64 bytes (IEEE P1363), not ~71 bytes (DER)
+      expect(buffer.length).toBe(64);
+      // First byte should NOT be 0x30 (DER SEQUENCE marker)
+      expect(buffer[0]).not.toBe(0x30);
+    });
+
+    it('handles encrypted PKCS#8 RSA key', () => {
+      // Generate encrypted RSA key
+      const password = 'test-password';
+      const encryptedRsaKey = generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { 
+          type: 'pkcs8', 
+          format: 'pem',
+          cipher: 'aes-256-cbc',
+          passphrase: password
+        }
+      });
+
+      // Verify key format
+      expect(encryptedRsaKey.privateKey).toContain('BEGIN ENCRYPTED PRIVATE KEY');
+
+      const data = 'test data';
+      const signature = signAuto(data, encryptedRsaKey.privateKey, password);
+
+      expect(signature).toBeTruthy();
+      expect(verifyRSA_PSS(data, signature, encryptedRsaKey.publicKey)).toBe(true);
+    });
   });
 
   describe('verifyRSA_PSS', () => {

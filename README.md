@@ -10,8 +10,6 @@ This repository provides an API v2-only SDK for Poland's e-invoicing platform (*
 - ✅ Test data utilities (TE-only) and sample flow wired via Vitest
 - ✅ Dynamic rate-limit sync helpers for `/api/v2/rate-limits`
 
-> **Status:** Legacy API 1.0 paths have been removed. All docs and examples now reference `KsefApiV2Client` exclusively.
-
 ## Installation
 
 ```bash

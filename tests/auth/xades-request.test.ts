@@ -142,11 +142,13 @@ describe('buildSignedAuthTokenRequest', () => {
     );
 
     expect(result).toContain('<ds:Signature');
-    expect(result).toContain('<ds:SignedInfo>');
+    // SignedInfo may have namespace declaration and Id attribute
+    expect(result).toMatch(/<ds:SignedInfo[^>]*>/);
     expect(result).toContain('SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256"');
     expect(result).toContain('DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"');
     expect(result).toContain('<ds:DigestValue>');
-    expect(result).toContain('<ds:SignatureValue>');
+    // SignatureValue may have Id attribute
+    expect(result).toMatch(/<ds:SignatureValue[^>]*>/);
     expect(result).toContain('<ds:X509Certificate>');
   });
 
@@ -176,8 +178,8 @@ describe('buildSignedAuthTokenRequest', () => {
       credentials
     );
 
-    // Extract signature value
-    const signatureMatch = result.match(/<ds:SignatureValue>([^<]+)<\/ds:SignatureValue>/);
+    // Extract signature value (element may have Id attribute)
+    const signatureMatch = result.match(/<ds:SignatureValue[^>]*>([^<]+)<\/ds:SignatureValue>/);
     expect(signatureMatch).not.toBeNull();
     
     const signatureValue = signatureMatch![1];
@@ -223,8 +225,9 @@ describe('buildSignedAuthTokenRequest', () => {
       credentials
     );
 
-    const sig1 = result1.match(/<ds:SignatureValue>([^<]+)<\/ds:SignatureValue>/)![1];
-    const sig2 = result2.match(/<ds:SignatureValue>([^<]+)<\/ds:SignatureValue>/)![1];
+    // Element may have Id attribute
+    const sig1 = result1.match(/<ds:SignatureValue[^>]*>([^<]+)<\/ds:SignatureValue>/)![1];
+    const sig2 = result2.match(/<ds:SignatureValue[^>]*>([^<]+)<\/ds:SignatureValue>/)![1];
 
     expect(sig1).not.toBe(sig2);
   });

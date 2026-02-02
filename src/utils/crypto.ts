@@ -209,6 +209,10 @@ export function fromBase64(content: string): Buffer {
 /**
  * Create XML signature for KSeF authentication request
  */
+/**
+ * @deprecated This is a legacy helper and is not KSeF XAdES-compliant.
+ * Use the v2 XAdES flow in `src/api2/auth/xades-request.ts` instead.
+ */
 export function createXMLSignature(
   xmlContent: string,
   parsedCert: ParsedCertificate,

@@ -121,10 +121,17 @@ export function signAuto(
 ): string {
   const keyString = Buffer.isBuffer(privateKey) ? privateKey.toString('utf8') : privateKey;
 
-  if (keyString.includes('BEGIN EC PRIVATE KEY') || keyString.includes('BEGIN PRIVATE KEY')) {
+  // Check for EC keys in various PEM formats:
+  // - BEGIN EC PRIVATE KEY: SEC1 format (EC-specific)
+  // - BEGIN PRIVATE KEY: PKCS#8 unencrypted (can be EC or RSA)
+  // - BEGIN ENCRYPTED PRIVATE KEY: PKCS#8 encrypted (can be EC or RSA)
+  if (keyString.includes('BEGIN EC PRIVATE KEY') || 
+      keyString.includes('BEGIN PRIVATE KEY') ||
+      keyString.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
     try {
       return signWithECDSA_P256(data, privateKey, password);
     } catch {
+      // If ECDSA fails (e.g., key is RSA in PKCS#8 format), fall back to RSA-PSS
       return signWithRSA_PSS(data, privateKey, password);
     }
   } else if (keyString.includes('BEGIN RSA PRIVATE KEY')) {
