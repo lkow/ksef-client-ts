@@ -143,8 +143,8 @@ describe('buildSignedAuthTokenRequest', () => {
 
     expect(result).toContain('<ds:Signature');
     expect(result).toContain('<ds:SignedInfo>');
-    expect(result).toContain('<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256"/>');
-    expect(result).toContain('<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>');
+    expect(result).toContain('<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256">');
+    expect(result).toContain('<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256">');
     expect(result).toContain('<ds:DigestValue>');
     expect(result).toContain('<ds:SignatureValue>');
     expect(result).toContain('<ds:X509Certificate>');
@@ -227,4 +227,3 @@ describe('buildSignedAuthTokenRequest', () => {
     expect(sig1).not.toBe(sig2);
   });
 });
-

@@ -38,7 +38,7 @@ export class HttpClient {
       retryDelay: options.retryDelay ?? 1000,
       keepAlive: options.keepAlive ?? true,
       headers: options.headers ?? {},
-      userAgent: options.userAgent ?? 'KSeF-TypeScript-Client/1.0.0'
+      userAgent: options.userAgent ?? 'KSeF-TypeScript-Client/1.4.6'
     };
 
     // Initialize rate limiter if configured
