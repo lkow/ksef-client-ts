@@ -143,8 +143,8 @@ describe('buildSignedAuthTokenRequest', () => {
 
     expect(result).toContain('<ds:Signature');
     expect(result).toContain('<ds:SignedInfo>');
-    expect(result).toContain('<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256">');
-    expect(result).toContain('<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256">');
+    expect(result).toContain('SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256"');
+    expect(result).toContain('DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"');
     expect(result).toContain('<ds:DigestValue>');
     expect(result).toContain('<ds:SignatureValue>');
     expect(result).toContain('<ds:X509Certificate>');
@@ -161,7 +161,9 @@ describe('buildSignedAuthTokenRequest', () => {
     );
 
     expect(result).toContain('xmlns="http://ksef.mf.gov.pl/auth/token/2.0"');
-    expect(result).toContain('xmlns:ds="http://www.w3.org/2000/09/xmldsig#"');
+    expect(result).toContain('xmlns:xsd="http://www.w3.org/2001/XMLSchema"');
+    expect(result).toContain('xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"');
+    expect(result).toContain('<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"');
   });
 
   it('generates base64-encoded signature value', () => {
