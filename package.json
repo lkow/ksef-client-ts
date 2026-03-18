@@ -1,8 +1,9 @@
 {
   "name": "@ksef/client",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "TypeScript client library for KSeF (Krajowy System e-Faktur) - Poland's national e-invoicing system",
   "type": "module",
+  "packageManager": "pnpm@10.24.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
@@ -53,7 +54,8 @@
     "xades:auth": "node scripts/xades-auth-flow.mjs",
     "xades:check": "node scripts/xades-sign-check.mjs",
     "clean": "rimraf dist",
-    "prepare": "npm run build",
+    "release:pack": "pnpm run clean && pnpm pack --out ksef-client-%v.tgz",
+    "prepack": "pnpm run build",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "keywords": [
@@ -85,6 +87,7 @@
     "@vitest/coverage-v8": "^1.0.0",
     "@vitest/ui": "^1.0.0",
     "dotenv": "^17.2.3",
+    "esbuild-plugin-tsconfig-paths": "^1.0.2",
     "eslint": "^8.54.0",
     "rimraf": "^5.0.5",
     "tsc-alias": "^1.8.8",

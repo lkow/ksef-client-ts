@@ -1,0 +1,106 @@
+name: Release Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (for example: v1.7.1)"
+        required: true
+        type: string
+      release_name:
+        description: "Optional release title (defaults to tag)"
+        required: false
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        default: false
+        type: boolean
+      draft:
+        description: "Create as draft"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fail if tag or release already exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = `${{ inputs.tag }}`.trim();
+            const { owner, repo } = context.repo;
+
+            if (!tag) {
+              core.setFailed("Input 'tag' cannot be empty.");
+              return;
+            }
+
+            try {
+              await github.rest.git.getRef({
+                owner,
+                repo,
+                ref: `tags/${tag}`,
+              });
+              core.setFailed(`Tag '${tag}' already exists.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag,
+              });
+              core.setFailed(`Release for tag '${tag}' already exists.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            core.info(`Tag and release checks passed for '${tag}'.`);
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and pack tarball
+        run: pnpm run release:pack
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ksef-client-package
+          path: ksef-client-*.tgz
+
+      - name: Create GitHub release and upload tarball
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.release_name || inputs.tag }}
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}
+          files: ksef-client-*.tgz

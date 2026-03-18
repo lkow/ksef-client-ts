@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import { tsconfigPathsPlugin } from 'esbuild-plugin-tsconfig-paths';
 
 export default defineConfig({
   entry: ['src/index.ts', 'src/utils/crypto.ts', 'src/utils/validation.ts'],
@@ -16,6 +17,7 @@ export default defineConfig({
       js: format === 'cjs' ? '.cjs' : '.js',
     };
   },
+  esbuildPlugins: [tsconfigPathsPlugin()],
   esbuildOptions(options) {
     options.banner = {
       js: '"use client";',
