@@ -4,6 +4,7 @@ import {
   API_V2_BASE_URLS,
   type ApiV2Environment
 } from '../types/common.js';
+import { Routes } from '../routes.js';
 import type {
   CertificateLimitsResponse,
   CertificateEnrollmentDataResponse,
@@ -30,7 +31,7 @@ export class CertificateService {
   async getLimits(accessToken: string): Promise<CertificateLimitsResponse> {
     const response = await this.httpClient.request<CertificateLimitsResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/certificates/limits`,
+      url: `${this.baseUrl}${Routes.Certificates.limits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -42,7 +43,7 @@ export class CertificateService {
   async getEnrollmentData(accessToken: string): Promise<CertificateEnrollmentDataResponse> {
     const response = await this.httpClient.request<CertificateEnrollmentDataResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/certificates/enrollments/data`,
+      url: `${this.baseUrl}${Routes.Certificates.enrollmentData}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -57,7 +58,7 @@ export class CertificateService {
   ): Promise<EnrollCertificateResponse> {
     const response = await this.httpClient.request<EnrollCertificateResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/certificates/enrollments`,
+      url: `${this.baseUrl}${Routes.Certificates.enrollments}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -73,7 +74,7 @@ export class CertificateService {
   ): Promise<CertificateEnrollmentStatusResponse> {
     const response = await this.httpClient.request<CertificateEnrollmentStatusResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/certificates/enrollments/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Certificates.enrollmentStatus(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -88,7 +89,7 @@ export class CertificateService {
   ): Promise<RetrieveCertificatesResponse> {
     const response = await this.httpClient.request<RetrieveCertificatesResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/certificates/retrieve`,
+      url: `${this.baseUrl}${Routes.Certificates.retrieve}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -105,7 +106,7 @@ export class CertificateService {
   ): Promise<void> {
     const options: Parameters<typeof this.httpClient.request>[0] = {
       method: 'POST',
-      url: `${this.baseUrl}/certificates/${certificateSerialNumber}/revoke`,
+      url: `${this.baseUrl}${Routes.Certificates.revoke(certificateSerialNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -127,7 +128,7 @@ export class CertificateService {
     });
     const response = await this.httpClient.request<QueryCertificatesResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/certificates/query${query}`,
+      url: `${this.baseUrl}${Routes.Certificates.query}${query}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -137,4 +138,3 @@ export class CertificateService {
     return response.data;
   }
 }
-

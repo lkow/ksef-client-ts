@@ -5,6 +5,7 @@ import {
   type ApiV2Environment,
   type TokenReferenceNumber
 } from '../types/common.js';
+import { Routes } from '../routes.js';
 import type {
   GenerateTokenRequest,
   GenerateTokenResponse,
@@ -38,7 +39,7 @@ export class TokenService {
   ): Promise<GenerateTokenResponse> {
     const response = await this.httpClient.request<GenerateTokenResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/tokens`,
+      url: `${this.baseUrl}${Routes.Tokens.root}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -69,7 +70,7 @@ export class TokenService {
 
     const response = await this.httpClient.request<QueryTokensResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/tokens${query}`,
+      url: `${this.baseUrl}${Routes.Tokens.root}${query}`,
       headers
     });
 
@@ -82,7 +83,7 @@ export class TokenService {
   ): Promise<TokenStatusResponse> {
     const response = await this.httpClient.request<TokenStatusResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/tokens/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Tokens.byReference(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -94,7 +95,7 @@ export class TokenService {
   async revokeToken(accessToken: string, referenceNumber: TokenReferenceNumber): Promise<void> {
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/tokens/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Tokens.byReference(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }

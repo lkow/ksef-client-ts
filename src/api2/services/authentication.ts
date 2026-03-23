@@ -14,6 +14,7 @@ import { SecurityService } from '../security.js';
 import { encryptTokenPayload } from '../crypto/token.js';
 import type { CertificateCredentials } from '@/types/auth.js';
 import { buildSignedAuthTokenRequest, type SubjectIdentifierTypeV2 } from '../auth/xades-request.js';
+import { Routes } from '../routes.js';
 
 export interface TokenAuthenticationOptions {
   /**
@@ -47,7 +48,7 @@ export class AuthenticationV2Service {
   async requestChallenge(): Promise<AuthenticationChallengeResponse> {
     const response = await this.httpClient.request<AuthenticationChallengeResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/auth/challenge`
+      url: `${this.baseUrl}${Routes.Auth.challenge}`
     });
     return response.data;
   }
@@ -79,7 +80,7 @@ export class AuthenticationV2Service {
 
     const response = await this.httpClient.request<AuthenticationInitResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/auth/ksef-token`,
+      url: `${this.baseUrl}${Routes.Auth.ksefToken}`,
       body: createRequestBody(requestBody)
     });
     return response.data;
@@ -117,7 +118,7 @@ export class AuthenticationV2Service {
     const query = options?.verifyCertificateChain ? '?verifyCertificateChain=true' : '';
     const response = await this.httpClient.request<AuthenticationInitResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/auth/xades-signature${query}`,
+      url: `${this.baseUrl}${Routes.Auth.xadesSignature}${query}`,
       headers: {
         'Content-Type': 'application/xml',
         ...(authenticationToken ? { 'Authorization': `Bearer ${authenticationToken}` } : {})
@@ -133,7 +134,7 @@ export class AuthenticationV2Service {
   ): Promise<AuthenticationOperationStatusResponse> {
     const response = await this.httpClient.request<AuthenticationOperationStatusResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/auth/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Auth.status(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${authenticationToken}`
       }
@@ -144,7 +145,7 @@ export class AuthenticationV2Service {
   async redeemTokens(authenticationToken: string): Promise<AuthenticationTokenRedeemResponse> {
     const response = await this.httpClient.request<AuthenticationTokenRedeemResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/auth/token/redeem`,
+      url: `${this.baseUrl}${Routes.Auth.tokenRedeem}`,
       headers: {
         'Authorization': `Bearer ${authenticationToken}`
       }
@@ -155,7 +156,7 @@ export class AuthenticationV2Service {
   async refreshAccessToken(refreshToken: string): Promise<AuthenticationTokenRefreshResponse> {
     const response = await this.httpClient.request<AuthenticationTokenRefreshResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/auth/token/refresh`,
+      url: `${this.baseUrl}${Routes.Auth.tokenRefresh}`,
       headers: {
         'Authorization': `Bearer ${refreshToken}`
       },

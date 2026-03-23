@@ -4,6 +4,7 @@ import {
   API_V2_BASE_URLS,
   type ApiV2Environment
 } from '../types/common.js';
+import { Routes } from '../routes.js';
 import type {
   TestDataPermissionsGrantRequest,
   TestDataPermissionsRevokeRequest,
@@ -45,7 +46,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/permissions`,
+      url: `${this.baseUrl}${Routes.TestData.grantPermissions}`,
       body: createRequestBody(request)
     });
   }
@@ -54,7 +55,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/permissions/revoke`,
+      url: `${this.baseUrl}${Routes.TestData.revokePermissions}`,
       body: createRequestBody(request)
     });
   }
@@ -63,7 +64,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/attachment`,
+      url: `${this.baseUrl}${Routes.TestData.enableAttachments}`,
       body: createRequestBody(request)
     });
   }
@@ -72,7 +73,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/attachment/revoke`,
+      url: `${this.baseUrl}${Routes.TestData.disableAttachments}`,
       body: createRequestBody(request)
     });
   }
@@ -81,7 +82,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/subject`,
+      url: `${this.baseUrl}${Routes.TestData.createSubject}`,
       body: createRequestBody(request)
     });
   }
@@ -90,7 +91,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/subject/remove`,
+      url: `${this.baseUrl}${Routes.TestData.removeSubject}`,
       body: createRequestBody(request)
     });
   }
@@ -99,7 +100,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/person`,
+      url: `${this.baseUrl}${Routes.TestData.createPerson}`,
       body: createRequestBody(request)
     });
   }
@@ -108,7 +109,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/person/remove`,
+      url: `${this.baseUrl}${Routes.TestData.removePerson}`,
       body: createRequestBody(request)
     });
   }
@@ -117,7 +118,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/limits/context/session`,
+      url: `${this.baseUrl}${Routes.TestData.sessionLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -129,7 +130,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/testdata/limits/context/session`,
+      url: `${this.baseUrl}${Routes.TestData.sessionLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -140,7 +141,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/limits/subject/certificate`,
+      url: `${this.baseUrl}${Routes.TestData.subjectLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -152,7 +153,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/testdata/limits/subject/certificate`,
+      url: `${this.baseUrl}${Routes.TestData.subjectLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -163,7 +164,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/rate-limits`,
+      url: `${this.baseUrl}${Routes.TestData.rateLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -175,7 +176,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/testdata/rate-limits`,
+      url: `${this.baseUrl}${Routes.TestData.rateLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -186,7 +187,7 @@ export class TestDataService {
     this.ensureTestEnvironment();
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/testdata/rate-limits/production`,
+      url: `${this.baseUrl}${Routes.TestData.productionRateLimits}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }

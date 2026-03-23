@@ -10,6 +10,7 @@ export * from './types/peppol.js';
 export * from './types/certificates.js';
 export * from './client.js';
 export * from './auth-manager.js';
+export * from './routes.js';
 export * from './services/authentication.js';
 export * from './services/auth-sessions.js';
 export * from './services/sessions.js';
