@@ -19,6 +19,7 @@ import type {
   PermissionsOperationStatusResponse,
   PersonalPermissionsQueryRequest,
   PersonPermissionsQueryRequest,
+  EntityPermissionsQueryRequest,
   SubunitPermissionsQueryRequest,
   QueryPermissionsResponse,
   EntityAuthorizationPermissionsQueryRequest,
@@ -239,6 +240,27 @@ export class PermissionsV2Service {
     const response = await this.httpClient.request<QueryPermissionsResponse<any>>({
       method: 'POST',
       url: `${this.baseUrl}${Routes.Permissions.queryPersons}${query}`,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: createRequestBody(request)
+    });
+
+    return response.data;
+  }
+
+  async queryEntityGrants(
+    accessToken: string,
+    request: EntityPermissionsQueryRequest,
+    options: { pageOffset?: number; pageSize?: number } = {}
+  ): Promise<QueryPermissionsResponse<any>> {
+    const query = buildQueryString({
+      pageOffset: options.pageOffset ?? 0,
+      pageSize: options.pageSize ?? 10
+    });
+    const response = await this.httpClient.request<QueryPermissionsResponse<any>>({
+      method: 'POST',
+      url: `${this.baseUrl}${Routes.Permissions.queryEntitiesGrants}${query}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },

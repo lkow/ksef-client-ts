@@ -52,6 +52,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
+    "check:openapi": "node .github/scripts/check-openapi-coverage.mjs",
     "xades:auth": "node scripts/xades-auth-flow.mjs",
     "xades:check": "node scripts/xades-sign-check.mjs",
     "clean": "rimraf dist",

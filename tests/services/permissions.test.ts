@@ -291,6 +291,19 @@ describe('PermissionsV2Service', () => {
     });
   });
 
+  describe('queryEntityGrants', () => {
+    it('calls POST /permissions/query/entities/grants', async () => {
+      mockHttpClient.mockResponse({ permissions: [] });
+
+      const service = new PermissionsV2Service(mockHttpClient as any, 'test');
+
+      await service.queryEntityGrants('token', {});
+
+      const request = mockHttpClient.getLastRequest();
+      expect(request?.url).toContain('/permissions/query/entities/grants');
+    });
+  });
+
   describe('querySubunitPermissions', () => {
     it('calls POST /permissions/query/subunits/grants', async () => {
       mockHttpClient.mockResponse({ permissions: [] });

@@ -2,33 +2,13 @@
   "openapi": "3.0.4",
   "info": {
     "title": "KSeF API TR",
-    "description": "**Wersja API:** 2.0.0 (build 2.0.0-tr-20251229.1+4e064b0f8497598eeb393ab74ab9a5ada61f64a5)<br>\n**Klucze publiczne** Ministerstwa Finansów (dla danego środowiska): [Pobierz klucze](#tag/Certyfikaty-klucza-publicznego)<br>\n**Historia zmian:** [Changelog](https://github.com/CIRFMF/ksef-docs/blob/main/api-changelog.md)<br>\n**Rozszerzona dokumentacja API:** [ksef-docs](https://github.com/CIRFMF/ksef-docs/tree/main)\n\n**Adres serwera API:**\n- Środowisko DEMO: `https://api-demo.ksef.mf.gov.pl/v2`\n- [deprecated] Środowisko DEMO: `https://ksef-demo.mf.gov.pl/api/v2`\n",
+    "description": "**Wersja API:** 2.3.0 (build 2.3.0-tr-20260319.1+d7f150a4edc9f4ff8477ffa62cf764e0708bdf72)<br>\n**Klucze publiczne** Ministerstwa Finansów (dla danego środowiska): [Pobierz klucze](#tag/Certyfikaty-klucza-publicznego)<br>\n**Historia zmian:** [Changelog](https://github.com/CIRFMF/ksef-docs/blob/main/api-changelog.md)<br>\n**Rozszerzona dokumentacja API:** [ksef-docs](https://github.com/CIRFMF/ksef-docs/tree/main)\n\n**Adres serwera API:**\n- Środowisko DEMO: `https://api-demo.ksef.mf.gov.pl/v2`\n",
     "version": "v2"
   },
   "servers": [
     {
       "url": "https://api-demo.ksef.mf.gov.pl/v2",
       "description": "Środowisko DEMO"
-    },
-    {
-      "url": "https://ksef-demo.mf.gov.pl/api/v2",
-      "description": "[deprecated] Środowisko DEMO"
-    },
-    {
-      "url": "https://api-test.ksef.mf.gov.pl/v2",
-      "description": "Środowisko TEST"
-    },
-    {
-      "url": "https://ksef-test.mf.gov.pl/api/v2",
-      "description": "[deprecated] Środowisko TEST"
-    },
-    {
-      "url": "https://api.ksef.mf.gov.pl/v2",
-      "description": "Środowisko PROD"
-    },
-    {
-      "url": "https://ksef.mf.gov.pl/api/v2",
-      "description": "[deprecated] Środowisko PROD"
     }
   ],
   "paths": {
@@ -77,6 +57,11 @@
                       "isCurrent": false,
                       "startDate": "2025-10-11T12:23:56.0154302+00:00",
                       "authenticationMethod": "QualifiedSeal",
+                      "authenticationMethodInfo": {
+                        "category": "XadesSignature",
+                        "code": "xades.qualified-seal",
+                        "displayName": "Pieczęć kwalifikowana"
+                      },
                       "status": {
                         "code": 200,
                         "description": "Uwierzytelnianie zakończone sukcesem"
@@ -118,8 +103,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -180,8 +182,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -247,8 +266,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -310,8 +346,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -381,8 +434,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -473,8 +543,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -554,8 +641,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -650,8 +754,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -731,8 +852,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -857,8 +995,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1005,8 +1160,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1038,10 +1210,10 @@
                 },
                 "example": {
                   "enrollment": {
-                    "maxEnrollments": 6
+                    "maxEnrollments": 12
                   },
                   "certificate": {
-                    "maxCertificates": 2
+                    "maxCertificates": 6
                   }
                 }
               }
@@ -1076,8 +1248,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1201,8 +1390,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1251,7 +1457,14 @@
                   "Introspection",
                   "CredentialsRead"
                 ],
-                "description": "Opis uprawnienia"
+                "description": "Opis uprawnienia",
+                "subjectDetails": {
+                  "subjectDetailsType": "PersonByIdentifier",
+                  "personById": {
+                    "firstName": "Adam",
+                    "lastName": "Abacki"
+                  }
+                }
               }
             }
           }
@@ -1300,10 +1513,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1359,7 +1586,10 @@
                     "canDelegate": true
                   }
                 ],
-                "description": "Opis uprawnienia"
+                "description": "Opis uprawnienia",
+                "subjectDetails": {
+                  "fullName": "Firma sp. z o.o."
+                }
               }
             }
           }
@@ -1408,10 +1638,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1458,7 +1702,10 @@
                   "value": "7762811692"
                 },
                 "permission": "SelfInvoicing",
-                "description": "działanie w imieniu 3393244202 w kontekście 7762811692, Firma sp. z o.o."
+                "description": "działanie w imieniu 3393244202 w kontekście 7762811692, Firma sp. z o.o.",
+                "subjectDetails": {
+                  "fullName": "Firma sp. z o.o."
+                }
               }
             }
           }
@@ -1507,10 +1754,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1564,7 +1825,14 @@
                   "InvoiceWrite",
                   "InvoiceRead"
                 ],
-                "description": "praca dla klienta 5687926712; uprawniony PESEL: 22271569167, Adam Abacki; pośrednik 3936518395"
+                "description": "praca dla klienta 5687926712; uprawniony PESEL: 22271569167, Adam Abacki; pośrednik 3936518395",
+                "subjectDetails": {
+                  "subjectDetailsType": "PersonByIdentifier",
+                  "personById": {
+                    "firstName": "Adam",
+                    "lastName": "Abacki"
+                  }
+                }
               }
             }
           }
@@ -1613,10 +1881,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1667,7 +1949,14 @@
                   "value": "7762811692-12345"
                 },
                 "description": "Opis uprawnienia",
-                "subunitName": "Jednostka 014"
+                "subunitName": "Jednostka 014",
+                "subjectDetails": {
+                  "subjectDetailsType": "PersonByIdentifier",
+                  "personById": {
+                    "firstName": "Adam",
+                    "lastName": "Abacki"
+                  }
+                }
               }
             }
           }
@@ -1716,10 +2005,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1772,7 +2075,22 @@
                   "value": "7762811692-DE123456789012"
                 },
                 "description": "Opis uprawnienia",
-                "euEntityName": "Firma G.m.b.H."
+                "euEntityName": "Firma G.m.b.H.",
+                "subjectDetails": {
+                  "subjectDetailsType": "PersonByFingerprintWithIdentifier",
+                  "personByFpWithId": {
+                    "firstName": "Adam",
+                    "lastName": "Abacki",
+                    "identifier": {
+                      "type": "Pesel",
+                      "value": "15062788702"
+                    }
+                  }
+                },
+                "euEntityDetails": {
+                  "fullName": "Firma G.m.b.H.",
+                  "address": "Warszawa ul. Świętokrzyska 4824 00-916 Warszawa"
+                }
               }
             }
           }
@@ -1821,10 +2139,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1874,7 +2206,18 @@
                   "InvoiceRead",
                   "InvoiceWrite"
                 ],
-                "description": "Opis uprawnienia"
+                "description": "Opis uprawnienia",
+                "subjectDetails": {
+                  "subjectDetailsType": "PersonByFingerprintWithIdentifier",
+                  "personByFpWithId": {
+                    "firstName": "Adam",
+                    "lastName": "Abacki",
+                    "identifier": {
+                      "type": "Pesel",
+                      "value": "15062788702"
+                    }
+                  }
+                }
               }
             }
           }
@@ -1923,10 +2266,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2006,10 +2363,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2091,10 +2462,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2176,8 +2561,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2240,10 +2642,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2329,10 +2745,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2454,9 +2884,9 @@
                       "ksefNumber": "5555555555-20250828-010080615740-E4",
                       "invoiceNumber": "FA/KUDYO1a7dddfe-610e-4843-84ba-6b887e35266e",
                       "issueDate": "2025-08-27",
-                      "invoicingDate": "2025-08-28T09:22:13.388+00:00",
-                      "acquisitionDate": "2025-08-28T09:22:56.388+00:00",
-                      "permanentStorageDate": "2025-08-28T09:23:01.388+00:00",
+                      "invoicingDate": "2025-08-28T09:22:13.3881234+00:00",
+                      "acquisitionDate": "2025-08-28T09:22:56.3881234+00:00",
+                      "permanentStorageDate": "2025-08-28T09:23:01.388123+00:00",
                       "seller": {
                         "nip": "5555555555",
                         "name": "Test Company 1"
@@ -2488,9 +2918,9 @@
                       "ksefNumber": "5555555555-20250828-010080615740-E4",
                       "invoiceNumber": "5265877635-20250925-010020A0A242-0A",
                       "issueDate": "2025-08-28",
-                      "invoicingDate": "2025-08-28T10:23:13.388+00:00",
-                      "acquisitionDate": "2025-08-28T10:23:56.388+00:00",
-                      "permanentStorageDate": "2025-08-28T10:24:01.388+00:00",
+                      "invoicingDate": "2025-08-28T10:23:13.3881234+00:00",
+                      "acquisitionDate": "2025-08-28T10:23:56.3881234+00:00",
+                      "permanentStorageDate": "2025-08-28T10:24:01.388123+00:00",
                       "seller": {
                         "nip": "5555555555",
                         "name": "Test Company 1"
@@ -2562,10 +2992,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2623,6 +3067,7 @@
                   "encryptedSymmetricKey": "bdUVjqLj+y2q6aBUuLxxXYAMqeDuIBRTyr+hB96DaWKaGzuVHw9p+Nk9vhzgF/Q5cavK2k6eCh6SdsrWI0s9mFFj4A4UJtsyD8Dn3esLfUZ5A1juuG3q3SBi/XOC/+9W+0T/KdwdE393mbiUNyx1K/0bw31vKJL0COeJIDP7usAMDl42/H1TNvkjk+8iZ80V0qW7D+RZdz+tdiY1xV0f2mfgwJ46V0CpZ+sB9UAssRj+eVffavJ0TOg2b5JaBxE8MCAvrF6rO5K4KBjUmoy7PP7g1qIbm8xI2GO0KnfPOO5OWj8rsotRwBgu7x19Ine3qYUvuvCZlXRGGZ5NHIzWPM4O74+gNalaMgFCsmv8mMhETSU4SfAGmJr9edxPjQSbgD5i2X4eDRDMwvyaAa7CP1b2oICju+0L7Fywd2ZtUcr6El++eTVoi8HYsTArntET++gULT7XXjmb8e3O0nxrYiYsE9GMJ7HBGv3NOoJ1NTm3a7U6+c0ZJiBVLvn6xXw10LQX243xH+ehsKo6djQJKYtqcNPaXtCwM1c9RrsOx/wRXyWCtTffqLiaR0LbYvfMJAcEWceG+RaeAx4p37OiQqdJypd6LAv9/0ECWK8Bip8yyoA+0EYiAJb9YuDz2YlQX9Mx9E9FzFIAsgEQ2w723HZYWgPywLb+dlsum4lTZKQ=",
                   "initializationVector": "c29tZUluaXRWZWN0b3I="
                 },
+                "onlyMetadata": false,
                 "filters": {
                   "subjectType": "Subject1",
                   "dateRange": {
@@ -2680,10 +3125,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2797,10 +3256,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3015,10 +3488,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3081,7 +3568,7 @@
                     "pages": [
                       {
                         "referenceNumber": "20250918-EU-2EBD6FA000-242EB9B66D-43",
-                        "downloadUrl": "https://ksef-test.mf.gov.pl/storage/01/20250918-so-3789a40000-20373e1269-a3/session-upo/upo_00.xml?sv=2025-01-05&st=2025-09-18T14%3A55%3A50Z&se=2025-09-21T15%3A00%3A50Z&sr=b&sp=r&sig=ZlQO6Xtzu3VQQDwmEMfb0VryMxe9WcUgWtkdiB6X2Qo%3D",
+                        "downloadUrl": "https://api-test.ksef.mf.gov.pl/storage/01/20250918-so-3789a40000-20373e1269-a3/session-upo/upo_00.xml?sv=2025-01-05&st=2025-09-18T14%3A55%3A50Z&se=2025-09-21T15%3A00%3A50Z&sr=b&sp=r&sig=ZlQO6Xtzu3VQQDwmEMfb0VryMxe9WcUgWtkdiB6X2Qo%3D",
                         "downloadUrlExpirationDate": "2025-09-21T15:00:50+00:00"
                       }
                     ]
@@ -3123,10 +3610,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3204,8 +3705,8 @@
                       "invoiceHash": "mkht+3m5trnfxlTYhq3QFn74LkEO69MFNlsMAkCDSPA=",
                       "acquisitionDate": "2025-09-18T12:24:16.0154302+00:00",
                       "invoicingDate": "2025-09-18T12:23:56.0154302+00:00",
-                      "permanentStorageDate": "2025-09-18T12:24:01.0154302+00:00",
-                      "upoDownloadUrl": "https://ksef-test.mf.gov.pl/storage/01/20250918-SB-3789A40000-20373E1269-A3/invoice-upo/upo_5265877635-20250626-010080DD2B5E-26.xml?sv=2025-01-05&st=2025-09-18T14%3A49%3A20Z&se=2025-09-21T14%3A54%3A20Z&sr=b&sp=r&sig=%2BUWFPA10gS580VhngGKW%2FZiOOtiHPOiTyMlxhG6ZvWs%3D",
+                      "permanentStorageDate": "2025-09-18T12:24:01.015432+00:00",
+                      "upoDownloadUrl": "https://api-test.ksef.mf.gov.pl/storage/01/20250918-SB-3789A40000-20373E1269-A3/invoice-upo/upo_5265877635-20250626-010080DD2B5E-26.xml?sv=2025-01-05&st=2025-09-18T14%3A49%3A20Z&se=2025-09-21T14%3A54%3A20Z&sr=b&sp=r&sig=%2BUWFPA10gS580VhngGKW%2FZiOOtiHPOiTyMlxhG6ZvWs%3D",
                       "upoDownloadUrlExpirationDate": "2025-09-21T14:54:20+00:00",
                       "status": {
                         "code": 200,
@@ -3264,10 +3765,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3372,10 +3887,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3498,10 +4027,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3598,10 +4141,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3698,10 +4255,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3798,10 +4369,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3897,8 +4482,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4045,8 +4647,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4144,8 +4763,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4209,8 +4845,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4341,7 +4994,8 @@
                 "example": {
                   "challenge": "20250514-CR-226FB7B000-3ACF9BE4C0-10",
                   "timestamp": "2025-07-11T12:23:56.0154302+00:00",
-                  "timestampMs": 1752236636015
+                  "timestampMs": 1752236636015,
+                  "clientIp": "127.0.0.1"
                 }
               }
             }
@@ -4703,8 +5357,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4774,8 +5445,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4841,8 +5529,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4861,7 +5566,7 @@
           "Wysyłka interaktywna"
         ],
         "summary": "Otwarcie sesji interaktywnej",
-        "description": "Otwiera sesję do wysyłki pojedynczych faktur. Należy przekazać schemat wysyłanych faktur oraz informacje o kluczu używanym do szyfrowania.\n\n> Więcej informacji:\n> - [Otwarcie sesji interaktywnej](https://github.com/CIRFMF/ksef-docs/blob/main/sesja-interaktywna.md#1-otwarcie-sesji)\n> - [Klucz publiczny Ministerstwa Finansów](/docs/v2/index.html#tag/Certyfikaty-klucza-publicznego)\n\nAby generować dokumenty UPO w wersji v4-3 w ramach sesji, należy przy jej otwarciu przesłać nagłówek <b>X-KSeF-Feature: upo-v4-3</b>.\nOd 22 grudnia 2025 wersja UPO v4-3 będzie generowana domyślnie.\n\n**Wymagane uprawnienia**: `InvoiceWrite`, `PefInvoiceWrite`, `EnforcementOperations`.",
+        "description": "Otwiera sesję do wysyłki pojedynczych faktur. Należy przekazać schemat wysyłanych faktur oraz informacje o kluczu używanym do szyfrowania.\n\n> Więcej informacji:\n> - [Otwarcie sesji interaktywnej](https://github.com/CIRFMF/ksef-docs/blob/main/sesja-interaktywna.md#1-otwarcie-sesji)\n> - [Klucz publiczny Ministerstwa Finansów](/docs/v2/index.html#tag/Certyfikaty-klucza-publicznego)\n\n**Wymagane uprawnienia**: `InvoiceWrite`, `PefInvoiceWrite`, `EnforcementOperations`.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4935,10 +5640,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5049,10 +5768,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5124,10 +5857,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5153,7 +5900,7 @@
           "Wysyłka wsadowa"
         ],
         "summary": "Otwarcie sesji wsadowej",
-        "description": "Otwiera sesję do wysyłki wsadowej faktur. Należy przekazać schemat wysyłanych faktur, informacje o paczce faktur oraz informacje o kluczu używanym do szyfrowania.\n\n> Więcej informacji:\n> - [Przygotowanie paczki faktur](https://github.com/CIRFMF/ksef-docs/blob/main/sesja-wsadowa.md)\n> - [Klucz publiczny Ministerstwa Finansów](/docs/v2/index.html#tag/Certyfikaty-klucza-publicznego)\n\nAby generować dokumenty UPO w wersji v4-3 w ramach sesji, należy przy jej otwarciu przesłać nagłówek <b>X-KSeF-Feature: upo-v4-3</b>.\nOd 22 grudnia 2025 wersja UPO v4-3 będzie generowana domyślnie.\n\n**Wymagane uprawnienia**: `InvoiceWrite`, `EnforcementOperations`.",
+        "description": "Otwiera sesję do wysyłki wsadowej faktur. Należy przekazać schemat wysyłanych faktur, informacje o paczce faktur oraz informacje o kluczu używanym do szyfrowania.\n\n> Więcej informacji:\n> - [Przygotowanie paczki faktur](https://github.com/CIRFMF/ksef-docs/blob/main/sesja-wsadowa.md)\n> - [Klucz publiczny Ministerstwa Finansów](/docs/v2/index.html#tag/Certyfikaty-klucza-publicznego)\n\n**Wymagane uprawnienia**: `InvoiceWrite`, `EnforcementOperations`.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5249,10 +5996,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5323,10 +6084,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5461,8 +6236,25 @@
             },
             "x-summary": "Too Many Requests"
           },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5614,10 +6406,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5762,10 +6568,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5792,6 +6612,160 @@
           "CredentialsManage",
           "CredentialsRead",
           "SubunitManage"
+        ]
+      }
+    },
+    "/permissions/query/entities/grants": {
+      "post": {
+        "tags": [
+          "Wyszukiwanie nadanych uprawnień"
+        ],
+        "summary": "Pobranie listy uprawnień do obsługi faktur w bieżącym kontekście",
+        "description": " Metoda pozwala na odczytanie otrzymanych uprawnień do obsługi faktur w bieżącym kontekście logowania.  \n\n W odpowiedzi przekazywane są następujące uprawnienia:  \n - nadane podmiotowi do obsługi faktur przez inny podmiot \n\n Uprawnienia zwracane przez operację obejmują:  \n - **InvoiceWrite** – wystawianie faktur  \n - **InvoiceRead** – przeglądanie faktur  \n\n Odpowiedź może być filtrowana na podstawie następujących parametrów:  \n - **contextIdentifier** – identyfikator podmiotu, który nadał uprawnienie do obsługi faktur  \n\n#### Stronicowanie wyników\nZapytanie zwraca **jedną stronę wyników** o numerze i rozmiarze podanym w ścieżce.\n- Przy pierwszym wywołaniu należy ustawić parametr `pageOffset = 0`.  \n- Jeżeli dostępna jest kolejna strona wyników, w odpowiedzi pojawi się flaga **`hasMore`**.  \n- W takim przypadku można wywołać zapytanie ponownie z kolejnym numerem strony.\n\n > Więcej informacji:\n > - [Pobieranie listy uprawnień](https://github.com/CIRFMF/ksef-docs/blob/main/uprawnienia.md#pobranie-listy-uprawnie%C5%84-do-obs%C5%82ugi-faktur-w-bie%C5%BC%C4%85cym-kontek%C5%9Bcie)\n\n**Sortowanie:**\n\n- startDate (Desc)\n- id (Asc)\n\n\n\n**Wymagane uprawnienia**: `CredentialsManage`, `CredentialsRead`.",
+        "parameters": [
+          {
+            "name": "pageOffset",
+            "in": "query",
+            "description": "Numer strony wyników.",
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Rozmiar strony wyników.",
+            "schema": {
+              "maximum": 100,
+              "minimum": 10,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/EntityPermissionsQueryRequest"
+                  }
+                ]
+              },
+              "example": {
+                "contextIdentifier": {
+                  "type": "Nip",
+                  "value": "3568707925"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryEntityPermissionsResponse"
+                },
+                "example": {
+                  "permissions": [
+                    {
+                      "id": "0c9a72e8-f344-457f-9c16-7c640eb60242",
+                      "contextIdentifier": {
+                        "type": "Nip",
+                        "value": "3568707925"
+                      },
+                      "permissionScope": "InvoiceWrite",
+                      "description": "Opis uprawnienia",
+                      "startDate": "2025-06-22T10:41:11+00:00",
+                      "canDelegate": false
+                    }
+                  ],
+                  "hasMore": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "| ExceptionCode | ExceptionDescription | Details |\n|-|-|-|\n| 21405 | Błąd walidacji danych wejściowych. | {treść błędu z walidatora} |",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExceptionResponse"
+                }
+              }
+            },
+            "x-summary": "Bad Request"
+          },
+          "429": {
+            "description": "| | req / s | req / min | req / h | grupa\n| --- | --- | --- | --- | --- |\n| **Limity liczby żądań** | 10 | 30 | 120 | other\n",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryAfter"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TooManyRequestsResponse"
+                }
+              }
+            },
+            "x-summary": "Too Many Requests"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ],
+        "x-rate-limits": {
+          "perSecond": 10,
+          "perMinute": 30,
+          "perHour": 120
+        },
+        "x-sort": [
+          {
+            "field": "startDate",
+            "direction": "Desc"
+          },
+          {
+            "field": "id",
+            "direction": "Asc"
+          }
+        ],
+        "x-required-permissions": [
+          "CredentialsManage",
+          "CredentialsRead"
         ]
       }
     },
@@ -5878,10 +6852,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6016,10 +7004,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6173,10 +7175,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6317,10 +7333,24 @@
             "x-summary": "Too Many Requests"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenProblemDetails"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6383,8 +7413,7 @@
             "description": "Lista adresów IPv4 w notacji CIDR, np. `172.16.0.0/16`.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AmountType": {
         "enum": [
@@ -6397,6 +7426,7 @@
       "AuthenticationChallengeResponse": {
         "required": [
           "challenge",
+          "clientIp",
           "timestamp",
           "timestampMs"
         ],
@@ -6414,9 +7444,12 @@
             "type": "integer",
             "description": "Czas wygenerowania challenge-a w milisekundach od 1 stycznia 1970 roku (Unix timestamp).",
             "format": "int64"
+          },
+          "clientIp": {
+            "type": "string",
+            "description": "Adres IP klienta."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationContextIdentifier": {
         "required": [
@@ -6437,8 +7470,7 @@
             "type": "string",
             "description": "Wartość identyfikatora"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationContextIdentifierType": {
         "enum": [
@@ -6476,12 +7508,12 @@
             ],
             "description": "Token operacji uwierzytelnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationListItem": {
         "required": [
           "authenticationMethod",
+          "authenticationMethodInfo",
           "referenceNumber",
           "startDate",
           "status"
@@ -6499,7 +7531,22 @@
                 "$ref": "#/components/schemas/AuthenticationMethod"
               }
             ],
-            "description": "Metoda uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| Token | Token KSeF. |\n| TrustedProfile | Profil Zaufany. |\n| InternalCertificate | Certyfikat KSeF. |\n| QualifiedSignature | Podpis kwalifikowany. |\n| QualifiedSeal | Pieczęć kwalifikowana. |\n| PersonalSignature | Podpis osobisty. |\n| PeppolSignature | Podpis dostawcy usług Peppol. |\n"
+            "description": "Metoda uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| Token | Token KSeF. |\n| TrustedProfile | Profil Zaufany. |\n| InternalCertificate | Certyfikat KSeF. |\n| QualifiedSignature | Podpis kwalifikowany. |\n| QualifiedSeal | Pieczęć kwalifikowana. |\n| PersonalSignature | Podpis osobisty. |\n| PeppolSignature | Podpis dostawcy usług Peppol. |\n",
+            "deprecated": true,
+            "x-removal-date": "2026-11-16"
+          },
+          "authenticationMethodInfo": {
+            "required": [
+              "category",
+              "code",
+              "displayName"
+            ],
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthenticationMethodInfo"
+              }
+            ],
+            "description": "Użyta metoda uwierzytelnienia."
           },
           "status": {
             "allOf": [
@@ -6507,7 +7554,7 @@
                 "$ref": "#/components/schemas/StatusInfo"
               }
             ],
-            "description": "Informacje o aktualnym statusie.\n| Code | Description | Details |\n| --- | --- | --- |\n| 100 | Uwierzytelnianie w toku | - |\n| 200 | Uwierzytelnianie zakończone sukcesem | - |\n| 415 | Uwierzytelnianie zakończone niepowodzeniem | Brak przypisanych uprawnień |\n| 425 | Uwierzytelnienie unieważnione  | Uwierzytelnienie i powiązane refresh tokeny zostały unieważnione przez użytkownika |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowe wyzwanie autoryzacyjne |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy token |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy czas tokena |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token unieważniony |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token nieaktywny |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Nieważny certyfikat |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Błąd weryfikacji łańcucha certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niezaufany łańcuch certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat odwołany |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niepoprawny certyfikat |\n| 470 | Uwierzytelnianie zakończone niepowodzeniem | Próba wykorzystania metod autoryzacyjnych osoby zmarłej |\n| 480 | Uwierzytelnienie zablokowane | Podejrzenie incydentu bezpieczeństwa. Skontaktuj się z Ministerstwem Finansów przez formularz zgłoszeniowy. |\n| 500 | Nieznany błąd | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie |"
+            "description": "Informacje o aktualnym statusie.\n| Code | Description | Details |\n| --- | --- | --- |\n| 100 | Uwierzytelnianie w toku | - |\n| 200 | Uwierzytelnianie zakończone sukcesem | - |\n| 415 | Uwierzytelnianie zakończone niepowodzeniem | Brak przypisanych uprawnień |\n| 425 | Uwierzytelnienie unieważnione  | Uwierzytelnienie i powiązane refresh tokeny zostały unieważnione przez użytkownika |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowe wyzwanie autoryzacyjne |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy token |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy czas tokena |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token unieważniony |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token nieaktywny |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Nieważny certyfikat |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Błąd weryfikacji łańcucha certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niezaufany łańcuch certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat odwołany |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat zawieszony |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niepoprawny certyfikat |\n| 470 | Uwierzytelnianie zakończone niepowodzeniem | Próba wykorzystania metod autoryzacyjnych osoby zmarłej |\n| 480 | Uwierzytelnienie zablokowane | Podejrzenie incydentu bezpieczeństwa. Skontaktuj się z Ministerstwem Finansów przez formularz zgłoszeniowy. |\n| 500 | Nieznany błąd | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie |"
           },
           "isTokenRedeemed": {
             "type": "boolean",
@@ -6539,8 +7586,7 @@
             "description": "Czy sesja jest powiązana z aktualnie używanym tokenem.",
             "readOnly": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationListResponse": {
         "required": [
@@ -6560,8 +7606,7 @@
             },
             "description": "Lista sesji uwierzytelniania."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationMethod": {
         "enum": [
@@ -6576,9 +7621,47 @@
         "type": "string",
         "description": "Metoda uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| Token | Token KSeF. |\n| TrustedProfile | Profil Zaufany. |\n| InternalCertificate | Certyfikat KSeF. |\n| QualifiedSignature | Podpis kwalifikowany. |\n| QualifiedSeal | Pieczęć kwalifikowana. |\n| PersonalSignature | Podpis osobisty. |\n| PeppolSignature | Podpis dostawcy usług Peppol. |\n"
       },
+      "AuthenticationMethodCategory": {
+        "enum": [
+          "XadesSignature",
+          "NationalNode",
+          "Token",
+          "Other"
+        ],
+        "type": "string",
+        "description": "| Wartość | Opis |\n| --- | --- |\n| XadesSignature | Uwierzytelnienie podpisem Xades. |\n| NationalNode | Uwierzytelnienie za pomocą Węzła Krajowego (login.gov.pl). |\n| Token | Uwierzytelnienie tokenem. |\n| Other | Uwierzytelnienie inną metodą. |\n"
+      },
+      "AuthenticationMethodInfo": {
+        "required": [
+          "category",
+          "code",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthenticationMethodCategory"
+              }
+            ],
+            "description": "Kategoria metody uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| XadesSignature | Uwierzytelnienie podpisem Xades. |\n| NationalNode | Uwierzytelnienie za pomocą Węzła Krajowego (login.gov.pl). |\n| Token | Uwierzytelnienie tokenem. |\n| Other | Uwierzytelnienie inną metodą. |\n"
+          },
+          "code": {
+            "type": "string",
+            "description": "Kod metody uwierzytelnienia."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Nazwa metody uwierzytelnienia do wyświetlenia użytkownikowi.",
+            "readOnly": true
+          }
+        }
+      },
       "AuthenticationOperationStatusResponse": {
         "required": [
           "authenticationMethod",
+          "authenticationMethodInfo",
           "startDate",
           "status"
         ],
@@ -6595,7 +7678,22 @@
                 "$ref": "#/components/schemas/AuthenticationMethod"
               }
             ],
-            "description": "Metoda uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| Token | Token KSeF. |\n| TrustedProfile | Profil Zaufany. |\n| InternalCertificate | Certyfikat KSeF. |\n| QualifiedSignature | Podpis kwalifikowany. |\n| QualifiedSeal | Pieczęć kwalifikowana. |\n| PersonalSignature | Podpis osobisty. |\n| PeppolSignature | Podpis dostawcy usług Peppol. |\n"
+            "description": "Metoda uwierzytelnienia.\n| Wartość | Opis |\n| --- | --- |\n| Token | Token KSeF. |\n| TrustedProfile | Profil Zaufany. |\n| InternalCertificate | Certyfikat KSeF. |\n| QualifiedSignature | Podpis kwalifikowany. |\n| QualifiedSeal | Pieczęć kwalifikowana. |\n| PersonalSignature | Podpis osobisty. |\n| PeppolSignature | Podpis dostawcy usług Peppol. |\n",
+            "deprecated": true,
+            "x-removal-date": "2026-11-16"
+          },
+          "authenticationMethodInfo": {
+            "required": [
+              "category",
+              "code",
+              "displayName"
+            ],
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthenticationMethodInfo"
+              }
+            ],
+            "description": "Użyta metoda uwierzytelnienia."
           },
           "status": {
             "allOf": [
@@ -6603,7 +7701,7 @@
                 "$ref": "#/components/schemas/StatusInfo"
               }
             ],
-            "description": "Informacje o aktualnym statusie.\n| Code | Description | Details |\n| --- | --- | --- |\n| 100 | Uwierzytelnianie w toku | - |\n| 200 | Uwierzytelnianie zakończone sukcesem | - |\n| 415 | Uwierzytelnianie zakończone niepowodzeniem | Brak przypisanych uprawnień |\n| 425 | Uwierzytelnienie unieważnione  | Uwierzytelnienie i powiązane refresh tokeny zostały unieważnione przez użytkownika |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowe wyzwanie autoryzacyjne |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy token |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy czas tokena |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token unieważniony |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token nieaktywny |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Nieważny certyfikat |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Błąd weryfikacji łańcucha certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niezaufany łańcuch certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat odwołany |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niepoprawny certyfikat |\n| 470 | Uwierzytelnianie zakończone niepowodzeniem | Próba wykorzystania metod autoryzacyjnych osoby zmarłej |\n| 480 | Uwierzytelnienie zablokowane | Podejrzenie incydentu bezpieczeństwa. Skontaktuj się z Ministerstwem Finansów przez formularz zgłoszeniowy. |\n| 500 | Nieznany błąd | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie |"
+            "description": "Informacje o aktualnym statusie.\n| Code | Description | Details |\n| --- | --- | --- |\n| 100 | Uwierzytelnianie w toku | - |\n| 200 | Uwierzytelnianie zakończone sukcesem | - |\n| 415 | Uwierzytelnianie zakończone niepowodzeniem | Brak przypisanych uprawnień |\n| 425 | Uwierzytelnienie unieważnione  | Uwierzytelnienie i powiązane refresh tokeny zostały unieważnione przez użytkownika |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowe wyzwanie autoryzacyjne |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy token |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Nieprawidłowy czas tokena |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token unieważniony |\n| 450 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędnego tokenu | Token nieaktywny |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Nieważny certyfikat |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Błąd weryfikacji łańcucha certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niezaufany łańcuch certyfikatów |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat odwołany |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Certyfikat zawieszony |\n| 460 | Uwierzytelnianie zakończone niepowodzeniem z powodu błędu certyfikatu | Niepoprawny certyfikat |\n| 470 | Uwierzytelnianie zakończone niepowodzeniem | Próba wykorzystania metod autoryzacyjnych osoby zmarłej |\n| 480 | Uwierzytelnienie zablokowane | Podejrzenie incydentu bezpieczeństwa. Skontaktuj się z Ministerstwem Finansów przez formularz zgłoszeniowy. |\n| 500 | Nieznany błąd | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie |"
           },
           "isTokenRedeemed": {
             "type": "boolean",
@@ -6622,8 +7720,7 @@
             "format": "date-time",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationTokenRefreshResponse": {
         "required": [
@@ -6643,8 +7740,7 @@
             ],
             "description": "Token dostępu, którego należy używać w wywołaniach chronionych zasobów API."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthenticationTokenStatus": {
         "enum": [
@@ -6688,8 +7784,7 @@
             ],
             "description": "Token umożliwiający odświeżenie tokenu dostępu.\n> Więcej informacji:\n> - [Odświeżanie tokena](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md#5-od%C5%9Bwie%C5%BCenie-tokena-dost%C4%99powego-accesstoken)"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AuthorizationPolicy": {
         "type": "object",
@@ -6703,8 +7798,7 @@
             "description": "Lista dozwolonych adresów IP.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "BatchFileInfo": {
         "required": [
@@ -6738,8 +7832,7 @@
             },
             "description": "Informacje o częściach pliku paczki. Maksymalna liczba części to 50. Maksymalny dozwolony rozmiar części przed zaszyfrowaniem to 100MB."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "BatchFilePartInfo": {
         "required": [
@@ -6769,8 +7862,7 @@
             ],
             "description": "Skrót SHA256 zaszyfrowanej części pliku paczki, zakodowany w formacie Base64."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "BatchSessionEffectiveContextLimits": {
         "required": [
@@ -6798,8 +7890,7 @@
             "description": "Maksymalna ilość faktur które można przesłać w pojedynczej sesji.",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "BuyerIdentifierType": {
         "enum": [
@@ -6818,8 +7909,7 @@
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CertificateEnrollmentDataResponse": {
         "required": [
@@ -6866,8 +7956,7 @@
             "description": "Identyfikator organizacji.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CertificateEnrollmentStatusResponse": {
         "required": [
@@ -6894,8 +7983,7 @@
             "description": "Numer seryjny wygenerowanego certyfikatu (w formacie szesnastkowym). \nZwracany w przypadku prawidłowego przeprocesowania wniosku certyfikacyjnego.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CertificateLimit": {
         "required": [
@@ -6914,8 +8002,7 @@
             "description": "Maksymalna liczba zasobów dozwolona w ramach limitu.",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CertificateLimitsResponse": {
         "required": [
@@ -6955,7 +8042,6 @@
             "description": "Informacje o limitach dotyczących liczby aktywnych certyfikatów wydanych dla danego podmiotu."
           }
         },
-        "additionalProperties": false,
         "description": "Informacje o limitach wniosków oraz certyfikatów dla uwierzytelnionego podmiotu."
       },
       "CertificateListItem": {
@@ -7034,8 +8120,7 @@
             "description": "Data złożenia wniosku certyfikacyjnego.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CertificateListItemStatus": {
         "enum": [
@@ -7078,7 +8163,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu dla którego wystawiono certyfikat.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "CertificateSubjectIdentifierType": {
@@ -7108,8 +8192,7 @@
             "format": "date-time",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CommonSessionStatus": {
         "enum": [
@@ -7331,8 +8414,7 @@
             "description": "Limit na godzinę.",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EffectiveApiRateLimits": {
         "required": [
@@ -7507,8 +8589,7 @@
             ],
             "description": "Limity dla pozostałych operacji API."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EffectiveContextLimits": {
         "required": [
@@ -7543,8 +8624,7 @@
             ],
             "description": "Limity dla sesji wsadowych."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EffectiveSubjectLimits": {
         "type": "object",
@@ -7565,8 +8645,7 @@
             ],
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EncryptionInfo": {
         "required": [
@@ -7585,8 +8664,7 @@
             "description": "Wektor inicjalizujący (IV) o długości 16 bajtów, używany do szyfrowania symetrycznego, zakodowany w formacie Base64.",
             "format": "byte"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EnrollCertificateRequest": {
         "required": [
@@ -7622,8 +8700,7 @@
             "format": "date-time",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EnrollCertificateResponse": {
         "required": [
@@ -7645,8 +8722,7 @@
             "description": "Data złożenia wniosku certyfikacyjnego.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EnrollmentEffectiveSubjectLimits": {
         "type": "object",
@@ -7655,8 +8731,7 @@
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityAuthorizationGrant": {
         "required": [
@@ -7746,8 +8821,7 @@
             "description": "Data rozpoczęcia obowiązywania uprawnienia.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityAuthorizationPermissionType": {
         "enum": [
@@ -7804,8 +8878,7 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityAuthorizationPermissionsQueryRequest": {
         "required": [
@@ -7855,8 +8928,7 @@
             "description": "Lista rodzajów wyszukiwanych uprawnień.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityAuthorizationPermissionsSubjectIdentifier": {
         "required": [
@@ -7880,7 +8952,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawnianego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| PeppolId | Identyfikator dostawcy usług Peppol |"
       },
       "EntityAuthorizationPermissionsSubjectIdentifierType": {
@@ -7912,7 +8983,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator osoby nadającej uprawnienie.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "EntityAuthorizationsAuthorIdentifierType": {
@@ -7945,7 +9015,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawnionego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| PeppolId | Identyfikator dostawcy usług Peppol |"
       },
       "EntityAuthorizationsAuthorizedEntityIdentifierType": {
@@ -7977,7 +9046,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawniającego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "EntityAuthorizationsAuthorizingEntityIdentifierType": {
@@ -8003,8 +9071,7 @@
             "type": "string",
             "description": "Adres podmiotu."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityDetails": {
         "required": [
@@ -8018,8 +9085,7 @@
             "type": "string",
             "description": "Pełna nazwa podmiotu."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityPermission": {
         "required": [
@@ -8039,13 +9105,106 @@
             "type": "boolean",
             "description": "Flaga pozwalająca na pośrednie przekazywanie danego uprawnienia"
           }
-        },
-        "additionalProperties": false
+        }
+      },
+      "EntityPermissionItem": {
+        "required": [
+          "canDelegate",
+          "contextIdentifier",
+          "description",
+          "id",
+          "permissionScope",
+          "startDate"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PermissionId"
+              }
+            ],
+            "description": "Identyfikator uprawnienia."
+          },
+          "contextIdentifier": {
+            "required": [
+              "type",
+              "value"
+            ],
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityPermissionsContextIdentifier"
+              }
+            ],
+            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
+          },
+          "permissionScope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityPermissionItemScope"
+              }
+            ],
+            "description": "Rodzaj uprawnienia."
+          },
+          "description": {
+            "maxLength": 256,
+            "minLength": 5,
+            "type": "string",
+            "description": "Opis uprawnienia."
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Data rozpoczęcia obowiązywania uprawnienia.",
+            "format": "date-time"
+          },
+          "canDelegate": {
+            "type": "boolean",
+            "description": "Flaga określająca, czy uprawnienie ma być możliwe do dalszego przekazywania."
+          }
+        }
+      },
+      "EntityPermissionItemScope": {
+        "enum": [
+          "InvoiceWrite",
+          "InvoiceRead"
+        ],
+        "type": "string"
       },
       "EntityPermissionType": {
         "enum": [
           "InvoiceWrite",
           "InvoiceRead"
+        ],
+        "type": "string"
+      },
+      "EntityPermissionsContextIdentifier": {
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityPermissionsContextIdentifierType"
+              }
+            ],
+            "description": "Typ identyfikatora."
+          },
+          "value": {
+            "maxLength": 16,
+            "minLength": 10,
+            "type": "string",
+            "description": "Wartość identyfikatora."
+          }
+        },
+        "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
+      },
+      "EntityPermissionsContextIdentifierType": {
+        "enum": [
+          "Nip",
+          "InternalId"
         ],
         "type": "string"
       },
@@ -8094,8 +9253,25 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
+      },
+      "EntityPermissionsQueryRequest": {
+        "type": "object",
+        "properties": {
+          "contextIdentifier": {
+            "required": [
+              "type",
+              "value"
+            ],
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityPermissionsContextIdentifier"
+              }
+            ],
+            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |",
+            "nullable": true
+          }
+        }
       },
       "EntityPermissionsSubjectIdentifier": {
         "required": [
@@ -8119,7 +9295,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "EntityPermissionsSubjectIdentifierType": {
@@ -8150,7 +9325,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "EntityPermissionsSubordinateEntityIdentifierType": {
@@ -8199,8 +9373,7 @@
             "description": "Data rozpoczęcia obowiązywania roli.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EntityRoleType": {
         "enum": [
@@ -8235,7 +9408,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu nadrzędnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "EntityRolesParentEntityIdentifierType": {
@@ -8288,7 +9460,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator kontekstu złożonego.\n| Type | Value |\n| --- | --- |\n| NipVatUe | Dwuczłonowy identyfikator składający się z numeru NIP i numeru VAT-UE: `{nip}-{vat_ue}` |"
       },
       "EuEntityAdministrationPermissionsContextIdentifierType": {
@@ -8367,8 +9538,7 @@
             ],
             "description": "Dane podmiotu unijnego, w kontekście którego nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityAdministrationPermissionsSubjectIdentifier": {
         "required": [
@@ -8392,7 +9562,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawnionego.\n| Type | Value |\n| --- | --- |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "EuEntityAdministrationPermissionsSubjectIdentifierType": {
@@ -8418,8 +9587,7 @@
             "type": "string",
             "description": "Adres podmiotu."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityPermission": {
         "required": [
@@ -8529,8 +9697,7 @@
             "description": "Data rozpoczęcia obowiązywania uprawnienia.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityPermissionSubjectDetails": {
         "required": [
@@ -8588,8 +9755,7 @@
             "description": "Dane podmiotu.\n*Wymagane, gdy subjectDetailsType = EntityByFingerprint.*",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityPermissionSubjectDetailsType": {
         "enum": [
@@ -8629,7 +9795,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator uprawniającego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "EuEntityPermissionsAuthorIdentifierType": {
@@ -8685,8 +9850,7 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityPermissionsQueryPermissionType": {
         "enum": [
@@ -8719,8 +9883,7 @@
             "description": "Lista rodzajów wyszukiwanych uprawnień.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "EuEntityPermissionsSubjectIdentifier": {
         "required": [
@@ -8744,7 +9907,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawnianego.\n| Type | Value |\n| --- | --- |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "EuEntityPermissionsSubjectIdentifierType": {
@@ -8771,8 +9933,7 @@
             },
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "ExceptionInfo": {
         "type": "object",
@@ -8808,8 +9969,7 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "ExceptionResponse": {
         "type": "object",
@@ -8823,7 +9983,6 @@
             "nullable": true
           }
         },
-        "additionalProperties": false,
         "example": {
           "exception": {
             "exceptionDetailList": [
@@ -8857,8 +10016,68 @@
             ],
             "description": "Numer referencyjny eksportu faktur."
           }
+        }
+      },
+      "ForbiddenProblemDetails": {
+        "required": [
+          "detail",
+          "reasonCode",
+          "status",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Forbidden"
+          },
+          "status": {
+            "type": "integer",
+            "description": "403",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Szczegółowy opis przyczyny odmowy dostępu."
+          },
+          "instance": {
+            "type": "string",
+            "description": "URI identyfikujące konkretne wystąpienie błędu.",
+            "nullable": true
+          },
+          "reasonCode": {
+            "type": "string",
+            "description": " Kod przyczyny odmowy dostępu.\n| Code | Opis |  \n|------|-------------|\n| missing-permissions | Brak wymaganych uprawnień do wykonania operacji w bieżącym kontekście. | \n| ip-not-allowed | Żądanie pochodzi z adresu IP innego niż wskazany podczas uwierzytelnienia. | \n| insufficient-resource-access | Brak dostępu do wskazanego zasobu. | \n| auth-method-not-allowed | Ta operacja nie jest dostępna dla użytej metody uwierzytelnienia. | \n| security-service-blocked | Żądanie zostało zablokowane przez mechanizmy bezpieczeństwa. | \n| context-type-not-allowed | Operacja nie jest dostępna dla uwierzytelnionego typu kontekstu. |"
+          },
+          "security": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Dodatkowe dane zależne od `reasonCode`.\n| Code  | Security |\n|------| ------------ |\n| missing-permissions | requiredAnyOfPermissions: string[], presentPermissions: string[] |\n| ip-not-allowed | clientIp: string |\n| insufficient-resource-access  ||\n| auth-method-not-allowed | authenticationMethodCategory: string  |\n| security-service-blocked | incidentId: string, clientIp: string  |\n| context-type-not-allowed | contextIdentifierType: string |",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Identyfikator śledzenia błędu.",
+            "nullable": true
+          }
         },
-        "additionalProperties": false
+        "example": {
+          "title": "Forbidden",
+          "status": 403,
+          "detail": "Brak wymaganych uprawnień do wykonania operacji w bieżącym kontekście.",
+          "reasonCode": "missing-permissions",
+          "security": {
+            "requiredAnyOfPermissions": [
+              "InvoiceRead",
+              "InvoiceWrite"
+            ],
+            "presentPermissions": [
+              "CredentialsManage"
+            ]
+          }
+        }
       },
       "FormCode": {
         "required": [
@@ -8880,8 +10099,7 @@
             "type": "string",
             "description": "Wartość"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "GenerateTokenRequest": {
         "required": [
@@ -8903,8 +10121,7 @@
             "type": "string",
             "description": "Opis tokena."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "GenerateTokenResponse": {
         "required": [
@@ -8926,8 +10143,7 @@
             "type": "string",
             "description": "Token KSeF."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "IdDocument": {
         "required": [
@@ -8954,7 +10170,6 @@
             "description": "Kraj wydania dokumentu tożsamości. Musi być zgodny z ISO 3166-1 alpha-2 (np. PL, DE, US) oraz zawierać dokładnie 2 wielkie litery."
           }
         },
-        "additionalProperties": false,
         "description": "Dane dokumentu tożsamości osoby fizycznej."
       },
       "IndirectPermissionType": {
@@ -9021,8 +10236,7 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "IndirectPermissionsSubjectIdentifier": {
         "required": [
@@ -9046,7 +10260,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator osoby fizycznej.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "IndirectPermissionsSubjectIdentifierType": {
@@ -9079,7 +10292,6 @@
             "nullable": true
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator kontekstu klienta. Nie przekazanie identyfikatora oznacza, że uprawnienie nadane w sposób pośredni jest typu generalnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| AllPartners | Identyfikator oznaczający, że uprawnienie nadane w sposób pośredni jest typu generalnego |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "IndirectPermissionsTargetIdentifierType": {
@@ -9132,8 +10344,7 @@
             "description": "Polityka autoryzacji żądań przy każdym użyciu tokena dostępu.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InternalId": {
         "maxLength": 16,
@@ -9161,6 +10372,11 @@
             ],
             "description": "Informacje wymagane do zaszyfrowania wyniku zapytania."
           },
+          "onlyMetadata": {
+            "type": "boolean",
+            "description": "Określa, czy zwrócić tylko metadane faktur (plik _metadata.json bez faktur).",
+            "default": false
+          },
           "filters": {
             "required": [
               "subjectType",
@@ -9173,8 +10389,7 @@
             ],
             "description": "Zestaw filtrów do wyszukiwania faktur."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceExportStatusResponse": {
         "required": [
@@ -9217,8 +10432,7 @@
             "description": "Dane paczki faktur przygotowanej do pobrania.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadata": {
         "required": [
@@ -9310,7 +10524,7 @@
           },
           "vatAmount": {
             "type": "number",
-            "description": "Łączna kwota VAT.",
+            "description": "Łączna kwota VAT wyrażona w PLN.",
             "format": "double"
           },
           "currency": {
@@ -9333,7 +10547,7 @@
                 "$ref": "#/components/schemas/InvoiceType"
               }
             ],
-            "description": "Rodzaj faktury.\n| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (RR) Podstawowa |\n| KorVatRr | (RR) Korygująca |\n"
+            "description": "Rodzaj faktury.\n| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (FA_RR) Podstawowa |\n| KorVatRr | (FA_RR) Korygująca |\n"
           },
           "formCode": {
             "required": [
@@ -9346,7 +10560,7 @@
                 "$ref": "#/components/schemas/FormCode"
               }
             ],
-            "description": "Struktura dokumentu faktury.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value |\n| --- | --- | --- |\n| [FA (2)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(2)_v1-0E.xsd) | 1-0E | FA |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |\n| [PEF (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF(3)_v2-1.xsd) | 2-1 | PEF |\n| [PEF_KOR (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF_KOR(3)_v2-1.xsd) | 2-1 | PEF |\n| FA_RR (1) | 1-0E | RR |\n"
+            "description": "Struktura dokumentu faktury.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value | ValidFrom | ValidTo |\n| --- | --- | --- | --- | --- |\n| [FA (2)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(2)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [PEF (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF(3)_v2-1.xsd) | 2-1 | PEF |  |  |\n| [PEF_KOR (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF_KOR(3)_v2-1.xsd) | 2-1 | PEF |  |  |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-0E.xsd) | 1-0E | RR |  | 23.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-1E.xsd) | 1-1E | RR |  | 30.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_FA_RR(1)_v1-1E.xsd) | 1-1E | FA_RR |  |  |\n"
           },
           "isSelfInvoicing": {
             "type": "boolean",
@@ -9394,8 +10608,7 @@
             "description": "Podmiot upoważniony.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataAuthorizedSubject": {
         "required": [
@@ -9423,8 +10636,7 @@
             "description": "Rola podmiotu upoważnionego.\n| Wartość | Opis |\n| ---- | --- |\n| 1 | Organ egzekucyjny - w przypadku, o którym mowa w art. 106c pkt 1 ustawy |\n| 2 | Komornik sądowy - w przypadku, o którym mowa w art. 106c pkt 2 ustawy |\n| 3 | Przedstawiciel podatkowy - w przypadku gdy na fakturze występują dane przedstawiciela podatkowego, o którym mowa w art. 18a - 18d ustawy |",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataBuyer": {
         "required": [
@@ -9449,8 +10661,7 @@
             "description": "Nazwa nabywcy.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataBuyerIdentifier": {
         "required": [
@@ -9472,8 +10683,7 @@
             "description": "Wartość identyfikatora nabywcy.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataSeller": {
         "required": [
@@ -9495,8 +10705,7 @@
             "description": "Nazwa sprzedawcy.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataThirdSubject": {
         "required": [
@@ -9523,8 +10732,7 @@
             "description": "Rola podmiotu trzeciego.\n| Wartość | Opis |\n| ---- | --- |\n| 0 | Inna rola |\n| 1 | Faktor - w przypadku gdy na fakturze występują dane faktora |\n| 2 | Odbiorca - w przypadku gdy na fakturze występują dane jednostek wewnętrznych, oddziałów, wyodrębnionych w ramach nabywcy, które same nie stanowią nabywcy w rozumieniu ustawy |\n| 3 | Podmiot pierwotny - w przypadku gdy na fakturze występują dane podmiotu będącego w stosunku do podatnika podmiotem przejętym lub przekształconym, który dokonywał dostawy lub świadczył usługę. Z wyłączeniem przypadków, o których mowa w art. 106j ust.2 pkt 3 ustawy, gdy dane te wykazywane są w części Podmiot1K |\n| 4 | Dodatkowy nabywca - w przypadku gdy na fakturze występują dane kolejnych (innych niż wymieniony w części Podmiot2) nabywców |\n| 5 | Wystawca faktury - w przypadku gdy na fakturze występują dane podmiotu wystawiającego fakturę w imieniu podatnika. Nie dotyczy przypadku, gdy wystawcą faktury jest nabywca |\n| 6 | Dokonujący płatności - w przypadku gdy na fakturze występują dane podmiotu regulującego zobowiązanie w miejsce nabywcy |\n| 7 | Jednostka samorządu terytorialnego - wystawca |\n| 8 | Jednostka samorządu terytorialnego - odbiorca |\n| 9 | Członek grupy VAT - wystawca |\n| 10 | Członek grupy VAT - odbiorca |\n| 11 | Pracownik |",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceMetadataThirdSubjectIdentifier": {
         "required": [
@@ -9546,8 +10754,7 @@
             "description": "Wartość identyfikatora podmiotu trzeciego.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoicePackage": {
         "required": [
@@ -9606,8 +10813,7 @@
             "format": "date-time",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoicePackagePart": {
         "required": [
@@ -9676,8 +10882,7 @@
             "description": "Data i godzina wygaśnięcia linku umożliwiającego pobranie części paczki.\nPo upływie tego momentu link przestaje być aktywny.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoicePermissionType": {
         "enum": [
@@ -9711,8 +10916,7 @@
             "format": "double",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceQueryBuyerIdentifier": {
         "required": [
@@ -9734,8 +10938,7 @@
             "description": "Wartość identyfikatora nabywcy (exact match).",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceQueryDateRange": {
         "required": [
@@ -9754,12 +10957,12 @@
           },
           "from": {
             "type": "string",
-            "description": "Data początkowa zakresu(UTC).",
+            "description": "Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.",
             "format": "date-time"
           },
           "to": {
             "type": "string",
-            "description": "Data końcowa zakresu(UTC). Jeśli nie zostanie podana, przyjmowana jest bieżąca data i czas w UTC.",
+            "description": "Data końcowa zakresu w formacie ISO-8601. Jeśli nie zostanie podana, przyjmowana jest bieżąca data i czas w UTC.",
             "format": "date-time",
             "nullable": true
           },
@@ -9768,8 +10971,7 @@
             "description": "Określa, czy system ma ograniczyć filtrowanie (zakres dateRange.to) do wartości `PermanentStorageHwmDate`.\n\n* Dotyczy wyłącznie zapytań z `dateType = PermanentStorage`,  \n* Gdy `true`, system ogranicza filtrowanie tak, aby wartość `dateRange.to` nie przekraczała wartości `PermanentStorageHwmDate`,  \n* Gdy `null` lub `false`, filtrowanie może wykraczać poza `PermanentStorageHwmDate`.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceQueryDateType": {
         "enum": [
@@ -9805,7 +11007,7 @@
                 "$ref": "#/components/schemas/InvoiceQueryDateRange"
               }
             ],
-            "description": "Typ i zakres dat, według którego mają być filtrowane faktury. Dozwolony maksymalny okres wynosi 3 miesiące."
+            "description": "Typ i zakres dat, według którego filtrowane są faktury.\nMaksymalny dozwolony okres wynosi 3 miesiące w strefie UTC lub w strefie Europe/Warsaw (WAW).\n            \nFormat daty:\n * Daty muszą być przekazane w formacie ISO 8601, np. `yyyy-MM-ddTHH:mm:ss`.\n * Dopuszczalne są następujące warianty:\n   - z sufiksem `Z` (czas UTC),\n   - z jawnym offsetem, np. `+01:00`, `+03:00`,\n   - bez offsetu (interpretowane jako czas lokalny strefy Europe/Warsaw)."
           },
           "ksefNumber": {
             "allOf": [
@@ -9883,7 +11085,7 @@
                 "$ref": "#/components/schemas/InvoiceQueryFormType"
               }
             ],
-            "description": "Typ dokumentu.\n| Wartość | Opis |\n| --- | --- |\n| FA | Faktura VAT |\n| PEF | Faktura PEF |\n| RR | Faktura RR |\n",
+            "description": "Typ dokumentu.\n| Wartość | Opis |\n| --- | --- |\n| FA | Faktura VAT |\n| PEF | Faktura PEF |\n| RR ![Deprecated](https://img.shields.io/badge/Deprecated-orange) | Faktura RR |\n| FA_RR | Faktura RR |\n",
             "nullable": true
           },
           "invoiceTypes": {
@@ -9891,7 +11093,7 @@
             "items": {
               "$ref": "#/components/schemas/InvoiceType"
             },
-            "description": "Rodzaje faktur.\n| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (RR) Podstawowa |\n| KorVatRr | (RR) Korygująca |\n",
+            "description": "Rodzaje faktur.\n| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (FA_RR) Podstawowa |\n| KorVatRr | (FA_RR) Korygująca |\n",
             "nullable": true
           },
           "hasAttachment": {
@@ -9899,17 +11101,17 @@
             "description": "Czy faktura ma załącznik.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceQueryFormType": {
         "enum": [
           "FA",
           "PEF",
-          "RR"
+          "RR",
+          "FA_RR"
         ],
         "type": "string",
-        "description": "| Wartość | Opis |\n| --- | --- |\n| FA | Faktura VAT |\n| PEF | Faktura PEF |\n| RR | Faktura RR |\n"
+        "description": "| Wartość | Opis |\n| --- | --- |\n| FA | Faktura VAT |\n| PEF | Faktura PEF |\n| RR ![Deprecated](https://img.shields.io/badge/Deprecated-orange) | Faktura RR |\n| FA_RR | Faktura RR |\n"
       },
       "InvoiceQuerySubjectType": {
         "enum": [
@@ -9955,8 +11157,7 @@
             "description": "Zbiór dodatkowych informacji związanych ze statusem faktury, zapisanych jako pary klucz–wartość.\nUmożliwia rozszerzenie modelu o dane specyficzne dla danego przypadku.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InvoiceType": {
         "enum": [
@@ -9974,7 +11175,7 @@
           "KorVatRr"
         ],
         "type": "string",
-        "description": "| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (RR) Podstawowa |\n| KorVatRr | (RR) Korygująca |\n"
+        "description": "| Wartość | Opis |\n| --- | --- |\n| Vat | (FA) Podstawowa |\n| Zal | (FA) Zaliczkowa |\n| Kor | (FA) Korygująca |\n| Roz | (FA) Rozliczeniowa |\n| Upr | (FA) Uproszczona |\n| KorZal | (FA) Korygująca fakturę zaliczkową |\n| KorRoz | (FA) Korygująca fakturę rozliczeniową |\n| VatPef | (PEF) Podstawowa |\n| VatPefSp | (PEF) Specjalizowana |\n| KorPef | (PEF) Korygująca |\n| VatRr | (FA_RR) Podstawowa |\n| KorVatRr | (FA_RR) Korygująca |\n"
       },
       "InvoicingMode": {
         "enum": [
@@ -10036,8 +11237,7 @@
             "description": "Maksymalna ilość faktur które można przesłać w pojedynczej sesji.",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "OpenBatchSessionRequest": {
         "required": [
@@ -10058,7 +11258,7 @@
                 "$ref": "#/components/schemas/FormCode"
               }
             ],
-            "description": "Schemat faktur wysyłanych w ramach sesji.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value |\n| --- | --- | --- |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |\n"
+            "description": "Schemat faktur wysyłanych w ramach sesji.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value | ValidFrom | ValidTo |\n| --- | --- | --- | --- | --- |\n| [FA (2)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(2)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-0E.xsd) | 1-0E | RR |  | 23.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-1E.xsd) | 1-1E | RR |  | 30.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_FA_RR(1)_v1-1E.xsd) | 1-1E | FA_RR |  |  |\n"
           },
           "batchFile": {
             "required": [
@@ -10090,8 +11290,7 @@
             "description": "Określa, czy podatnik deklaruje tryb fakturowania \"offline\" dla dokumentów przesyłanych w sesji wsadowej.",
             "default": false
           }
-        },
-        "additionalProperties": false
+        }
       },
       "OpenBatchSessionResponse": {
         "required": [
@@ -10115,8 +11314,7 @@
             },
             "description": "Dane wymagane do poprawnego przesłania poszczególnych części pliku paczki faktur.\n\nKażdą część pliku paczki zadeklarowaną w <b>fileParts</b> należy przesłać zgodnie z odpowiadającym jej obiektem w <b>partUploadRequests</b>.\nŁącznikiem pomiędzy deklaracją a instrukcją wysyłki jest pole <b>ordinalNumber</b>.\n\nDla każdej części należy:\n* zastosować metodę HTTP wskazaną w <b>method</b>,\n* ustawić adres z <b>url</b>,\n* dołączyć nagłówki z <b>headers</b>,\n* dołączyć treść części pliku w korpusie żądania.\n\n`Uwaga: nie należy dodawać do nagłówków token dostępu (accessToken).`\n \nKażdą część przesyła się oddzielnym żądaniem HTTP.Zwracane kody odpowiedzi:\n * <b>201</b> – poprawne przyjęcie pliku,\n * <b>400</b> – błędne dane,\n * <b>401</b> – nieprawidłowe uwierzytelnienie,\n * <b>403</b> – brak uprawnień do zapisu (np.upłynął czas na zapis)."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "OpenOnlineSessionRequest": {
         "required": [
@@ -10136,7 +11334,7 @@
                 "$ref": "#/components/schemas/FormCode"
               }
             ],
-            "description": "Schemat faktur wysyłanych w ramach sesji.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value |\n| --- | --- | --- |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |\n| [PEF (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF(3)_v2-1.xsd) | 2-1 | PEF |\n| [PEF_KOR (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF_KOR(3)_v2-1.xsd) | 2-1 | PEF |\n"
+            "description": "Schemat faktur wysyłanych w ramach sesji.\n\nObsługiwane schematy:\n| SystemCode | SchemaVersion | Value | ValidFrom | ValidTo |\n| --- | --- | --- | --- | --- |\n| [FA (2)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(2)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [FA (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/FA/schemat_FA(3)_v1-0E.xsd) | 1-0E | FA |  |  |\n| [PEF (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF(3)_v2-1.xsd) | 2-1 | PEF |  |  |\n| [PEF_KOR (3)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/PEF/Schemat_PEF_KOR(3)_v2-1.xsd) | 2-1 | PEF |  |  |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-0E.xsd) | 1-0E | RR |  | 23.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_RR(1)_v1-1E.xsd) | 1-1E | RR |  | 30.03.2026 |\n| [FA_RR (1)](https://github.com/CIRFMF/ksef-docs/blob/main/faktury/schemy/RR/schemat_FA_RR(1)_v1-1E.xsd) | 1-1E | FA_RR |  |  |\n"
           },
           "encryption": {
             "required": [
@@ -10150,8 +11348,7 @@
             ],
             "description": "Symetryczny klucz szyfrujący pliki XML, zaszyfrowany kluczem publicznym Ministerstwa Finansów."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "OpenOnlineSessionResponse": {
         "required": [
@@ -10173,8 +11370,7 @@
             "description": "Termin ważności sesji. Po jego upływie sesja zostanie automatycznie zamknięta.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PartUploadRequest": {
         "required": [
@@ -10208,8 +11404,7 @@
             },
             "description": "Nagłówki, których należy użyć przy wysyłce części pliku paczki."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PeppolId": {
         "maxLength": 9,
@@ -10244,8 +11439,7 @@
             "description": "Data rejestracji dostawcy usług Peppol w systemie.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionId": {
         "maxLength": 36,
@@ -10277,8 +11471,7 @@
             "type": "string",
             "description": "Adres podmiotu unijnego."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsOperationResponse": {
         "required": [
@@ -10294,8 +11487,7 @@
             ],
             "description": "Numer referencyjny operacji nadania lub odbierania uprawnień."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsOperationStatusResponse": {
         "required": [
@@ -10311,8 +11503,7 @@
             ],
             "description": "Informacje o aktualnym statusie.\n| Code | Description | Details |\n| --- | --- | --- |\n| 100 | Operacja przyjęta do realizacji | - |\n| 200 | Operacja zakończona sukcesem | - |\n| 400 | Operacja zakończona niepowodzeniem | - |\n| 410 | Podane identyfikatory są niezgodne lub pozostają w niewłaściwej relacji | - |\n| 420 | Użyte poświadczenia nie mają uprawnień do wykonania tej operacji | - |\n| 430 | Kontekst identyfikatora nie odpowiada wymaganej roli lub uprawnieniom | - |\n| 440 | Operacja niedozwolona dla wskazanych powiązań identyfikatorów | - |\n| 450 | Operacja niedozwolona dla wskazanego identyfikatora lub jego typu | - |\n| 500 | Nieznany błąd | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie później. |"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsSubjectEntityByFingerprintDetails": {
         "required": [
@@ -10340,8 +11531,7 @@
             "description": "Adres podmiotu.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsSubjectEntityByIdentifierDetails": {
         "required": [
@@ -10363,8 +11553,7 @@
             "type": "string",
             "description": "Pełna nazwa podmiotu."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsSubjectEntityDetails": {
         "required": [
@@ -10392,8 +11581,7 @@
             "description": "Adres podmiotu.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsSubjectPersonByFingerprintDetails": {
         "required": [
@@ -10456,8 +11644,7 @@
             "description": "Dane dokumentu tożsamości osoby fizycznej.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PermissionsSubjectPersonDetails": {
         "required": [
@@ -10520,8 +11707,7 @@
             "description": "Dane dokumentu tożsamości osoby fizycznej.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonByFingerprintWithIdentifierDetails": {
         "required": [
@@ -10555,8 +11741,7 @@
             ],
             "description": "Identyfikator osoby fizycznej."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonByFingerprintWithoutIdentifierDetails": {
         "required": [
@@ -10597,8 +11782,7 @@
             ],
             "description": "Dane dokumentu tożsamości osoby fizycznej."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonDetails": {
         "required": [
@@ -10619,8 +11803,7 @@
             "type": "string",
             "description": "Nazwisko osoby fizycznej."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonIdentifier": {
         "required": [
@@ -10643,8 +11826,7 @@
             "type": "string",
             "description": "Wartość identyfikatora."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonIdentifierType": {
         "enum": [
@@ -10781,8 +11963,7 @@
             "type": "boolean",
             "description": "Flaga określająca, czy uprawnienie ma być możliwe do dalszego przekazywania."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonPermissionScope": {
         "enum": [
@@ -10852,8 +12033,7 @@
             "description": "Dane podmiotu.\n*Wymagane, gdy subjectDetailsType = PersonByFingerprintWithoutIdentifier.*",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonPermissionSubjectDetailsType": {
         "enum": [
@@ -10898,7 +12078,6 @@
             "nullable": true
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator osoby lub podmiotu nadającego uprawnienie.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |\n| System | Identyfikator systemowy KSeF |"
       },
       "PersonPermissionsAuthorIdentifierType": {
@@ -10932,7 +12111,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator osoby lub podmiotu uprawnionego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "PersonPermissionsAuthorizedIdentifierType": {
@@ -10965,7 +12143,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator kontekstu uprawnienia (dla uprawnień nadanych administratorom jednostek podrzędnych).\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "PersonPermissionsContextIdentifierType": {
@@ -11020,8 +12197,7 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonPermissionsQueryRequest": {
         "required": [
@@ -11104,8 +12280,7 @@
             ],
             "description": "Typ zapytania.\n| Type | Value |\n| --- | --- |\n| PermissionsInCurrentContext | Lista uprawnień obowiązujących w bieżącym kontekście |\n| PermissionsGrantedInCurrentContext | Lista uprawnień nadanych w bieżącym kontekście |"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonPermissionsQueryType": {
         "enum": [
@@ -11136,7 +12311,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator osoby fizycznej.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "PersonPermissionsSubjectIdentifierType": {
@@ -11169,7 +12343,6 @@
             "nullable": true
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu docelowego dla uprawnień nadanych pośrednio.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| AllPartners | Identyfikator oznaczający, że uprawnienie nadane w sposób pośredni jest typu generalnego |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "PersonPermissionsTargetIdentifierType": {
@@ -11226,7 +12399,7 @@
                 "$ref": "#/components/schemas/PersonalPermissionsContextIdentifier"
               }
             ],
-            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |",
+            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |",
             "nullable": true
           },
           "authorizedIdentifier": {
@@ -11312,8 +12485,7 @@
             "type": "boolean",
             "description": "Flaga określająca, czy uprawnienie ma być możliwe do dalszego przekazywania."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonalPermissionScope": {
         "enum": [
@@ -11363,7 +12535,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu uprawnionego, jeżeli jest inny niż identyfikator uwierzytelnionego klienta API.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "PersonalPermissionsAuthorizedIdentifierType": {
@@ -11390,14 +12561,13 @@
             "description": "Typ identyfikatora."
           },
           "value": {
-            "maxLength": 10,
+            "maxLength": 16,
             "minLength": 10,
             "type": "string",
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
-        "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
+        "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "PersonalPermissionsContextIdentifierType": {
         "enum": [
@@ -11419,7 +12589,7 @@
                 "$ref": "#/components/schemas/PersonalPermissionsContextIdentifier"
               }
             ],
-            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |",
+            "description": "Identyfikator kontekstu podmiotu, który nadał uprawnienia do obsługi faktur.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |",
             "nullable": true
           },
           "targetIdentifier": {
@@ -11451,8 +12621,7 @@
             "description": "Stan uprawnienia. \n| Type | Value |\n| --- | --- |\n| Active | Uprawnienia aktywne |\n| Inactive | Uprawnienia nieaktywne |",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PersonalPermissionsTargetIdentifier": {
         "required": [
@@ -11476,7 +12645,6 @@
             "nullable": true
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu docelowego dla uprawnień selektywnych nadanych pośrednio.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| AllPartners | Identyfikator oznaczający, że wyszukiwanie dotyczy uprawnień generalnych nadanych w sposób pośredni |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "PersonalPermissionsTargetIdentifierType": {
@@ -11525,8 +12693,7 @@
             },
             "description": "Operacje do których może być używany certyfikat.\n| Wartość | Opis |\n| --- | --- |\n| KsefTokenEncryption | Szyfrowanie tokenów KSeF przesyłanych w trakcie procesu uwierzytelniania. |\n| SymmetricKeyEncryption | Szyfrowanie klucza symetrycznego wykorzystywanego do szyfrowania przesyłanych faktur. |\n"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "PublicKeyCertificateUsage": {
         "enum": [
@@ -11573,8 +12740,7 @@
             "format": "date-time",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryCertificatesResponse": {
         "required": [
@@ -11594,8 +12760,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryEntityAuthorizationPermissionsResponse": {
         "required": [
@@ -11615,8 +12780,27 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
+      },
+      "QueryEntityPermissionsResponse": {
+        "required": [
+          "hasMore",
+          "permissions"
+        ],
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityPermissionItem"
+            },
+            "description": "Lista odczytanych uprawnień."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Flaga informująca o dostępności kolejnej strony wyników."
+          }
+        }
       },
       "QueryEntityRolesResponse": {
         "required": [
@@ -11636,8 +12820,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryEuEntityPermissionsResponse": {
         "required": [
@@ -11657,8 +12840,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryInvoicesMetadataResponse": {
         "required": [
@@ -11689,8 +12871,7 @@
             },
             "description": "Lista faktur spełniających kryteria."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryPeppolProvidersResponse": {
         "required": [
@@ -11710,8 +12891,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryPersonPermissionsResponse": {
         "required": [
@@ -11731,8 +12911,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryPersonalPermissionsResponse": {
         "required": [
@@ -11752,8 +12931,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QuerySubordinateEntityRolesResponse": {
         "required": [
@@ -11773,8 +12951,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QuerySubunitPermissionsResponse": {
         "required": [
@@ -11794,8 +12971,7 @@
             "type": "boolean",
             "description": "Flaga informująca o dostępności kolejnej strony wyników."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryTokensResponse": {
         "required": [
@@ -11815,8 +12991,7 @@
             },
             "description": "Lista tokenów uwierzytelniających."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryTokensResponseItem": {
         "required": [
@@ -11902,8 +13077,7 @@
             "description": "Dodatkowe informacje na temat statusu, zwracane w przypadku błędów.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "QueryType": {
         "enum": [
@@ -11948,8 +13122,7 @@
             ],
             "description": "Typ certyfikatu.\n| Wartość | Opis |\n| --- | --- |\n| Authentication | Certyfikat używany do uwierzytelnienia w systemie. |\n| Offline | Certyfikat używany wyłącznie do potwierdzania autentyczności wystawcy i integralności faktury w trybie offline |\n"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "RetrieveCertificatesRequest": {
         "required": [
@@ -11966,8 +13139,7 @@
             },
             "description": "Numery seryjne certyfikatów do pobrania."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "RetrieveCertificatesResponse": {
         "required": [
@@ -11982,8 +13154,7 @@
             },
             "description": "Pobrane certyfikaty."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "RetryAfter": {
         "type": "integer",
@@ -12003,8 +13174,7 @@
             "description": "Powód unieważnienia certyfikatu.\n| Wartość | Opis |\n| --- | --- |\n| Unspecified | Nieokreślony. |\n| Superseded | Certyfikat został zastąpiony przez inny. |\n| KeyCompromise | Klucz prywatny powiązany z certyfikatem został skompromitowany. |\n",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SendInvoiceRequest": {
         "required": [
@@ -12063,8 +13233,7 @@
             "description": "Skrót SHA256 korygowanej faktury, zakodowany w formacie Base64. Wymagany przy wysyłaniu korekty technicznej faktury.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SendInvoiceResponse": {
         "required": [
@@ -12080,8 +13249,7 @@
             ],
             "description": "Numer referencyjny faktury."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SessionInvoiceStatusResponse": {
         "required": [
@@ -12182,8 +13350,7 @@
             ],
             "description": "Status faktury.\n\n| Code | Description | Details | Extensions |\n| --- | --- | --- | ---|\n| 100 | Faktura przyjęta do dalszego przetwarzania | - | - |\n| 150 | Trwa przetwarzanie | - | - |\n| 200 | Sukces | - | - |\n| 405 | Przetwarzanie anulowane z powodu błędu sesji | - | - |\n| 410 | Nieprawidłowy zakres uprawnień | - |  - |\n| 415 | Brak możliwości wysyłania faktury z załącznikiem | - | - |\n| 430 | Błąd weryfikacji pliku faktury | - | -  |\n| 435 | Błąd odszyfrowania pliku | - | - |\n| 440 | Duplikat faktury | - | 'originalSessionReferenceNumber', 'originalKsefNumber'|\n| 450 | Błąd weryfikacji semantyki dokumentu faktury | - | - |\n| 500 | Nieznany błąd ({statusCode}) | - | - |\n| 550 | Operacja została anulowana przez system | Przetwarzanie zostało przerwane z przyczyn wewnętrznych systemu. Spróbuj ponownie |- |"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SessionInvoicesResponse": {
         "required": [
@@ -12203,8 +13370,7 @@
             },
             "description": "Lista pobranych faktur."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SessionStatusResponse": {
         "required": [
@@ -12272,8 +13438,7 @@
             "format": "int32",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SessionType": {
         "enum": [
@@ -12301,8 +13466,7 @@
             },
             "description": "Lista sesji."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SessionsQueryResponseItem": {
         "required": [
@@ -12366,8 +13530,7 @@
             "description": "Liczba błędnie przetworzonych faktur.",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "Sha256HashBase64": {
         "maxLength": 44,
@@ -12409,8 +13572,7 @@
             "description": "Dodatkowe szczegóły statusu",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubordinateEntityRole": {
         "required": [
@@ -12452,8 +13614,7 @@
             "description": "Data rozpoczęcia obowiązywania powiązania.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubordinateEntityRoleType": {
         "enum": [
@@ -12478,8 +13639,7 @@
             "description": "Identyfikator podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubordinateRoleSubordinateEntityIdentifier": {
         "required": [
@@ -12503,7 +13663,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "SubordinateRoleSubordinateEntityIdentifierType": {
@@ -12608,8 +13767,7 @@
             "description": "Data rozpoczęcia obowiązywania uprawnienia.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubunitPermissionScope": {
         "enum": [
@@ -12639,7 +13797,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator uprawniającego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "SubunitPermissionsAuthorIdentifierType": {
@@ -12672,7 +13829,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator uprawnionego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "SubunitPermissionsContextIdentifier": {
@@ -12697,7 +13853,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |"
       },
       "SubunitPermissionsContextIdentifierType": {
@@ -12764,8 +13919,7 @@
             ],
             "description": "Dane podmiotu, któremu nadawane są uprawnienia."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubunitPermissionsQueryRequest": {
         "type": "object",
@@ -12783,8 +13937,7 @@
             "description": "Identyfikator jednostki lub podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |\n| Nip | 10 cyfrowy numer NIP |",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SubunitPermissionsSubjectIdentifier": {
         "required": [
@@ -12808,7 +13961,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator podmiotu lub osoby fizycznej.\n| Type | Value |\n| --- | --- |\n| Nip | 10 cyfrowy numer NIP |\n| Pesel | 11 cyfrowy numer PESEL |\n| Fingerprint | Odcisk palca certyfikatu |"
       },
       "SubunitPermissionsSubjectIdentifierType": {
@@ -12841,7 +13993,6 @@
             "description": "Wartość identyfikatora."
           }
         },
-        "additionalProperties": false,
         "description": "Identyfikator jednostki lub podmiotu podrzędnego.\n| Type | Value |\n| --- | --- |\n| InternalId | Dwuczłonowy identyfikator składający się z numeru NIP i 5 cyfr: `{nip}-{5_cyfr}` |\n| Nip | 10 cyfrowy numer NIP |"
       },
       "SubunitPermissionsSubunitIdentifierType": {
@@ -12890,8 +14041,7 @@
             "type": "string",
             "description": "Wartość identyfikatora."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "TokenContextIdentifierType": {
         "enum": [
@@ -12922,8 +14072,7 @@
             "type": "string",
             "description": "Wartość identyfikatora."
           }
-        },
-        "additionalProperties": false
+        }
       },
       "TokenInfo": {
         "required": [
@@ -12941,8 +14090,7 @@
             "description": "Data ważności tokena.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "TokenPermissionType": {
         "enum": [
@@ -12951,7 +14099,8 @@
           "CredentialsRead",
           "CredentialsManage",
           "SubunitManage",
-          "EnforcementOperations"
+          "EnforcementOperations",
+          "Introspection"
         ],
         "type": "string"
       },
@@ -13039,8 +14188,7 @@
             "description": "Dodatkowe informacje na temat statusu, zwracane w przypadku błędów.",
             "nullable": true
           }
-        },
-        "additionalProperties": false
+        }
       },
       "TooManyRequestsResponse": {
         "required": [
@@ -13085,6 +14233,44 @@
           }
         }
       },
+      "UnauthorizedProblemDetails": {
+        "required": [
+          "detail",
+          "status",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Unauthorized"
+          },
+          "status": {
+            "type": "integer",
+            "description": "401",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Szczegółowy opis przyczyny odmowy dostępu."
+          },
+          "instance": {
+            "type": "string",
+            "description": "URI identyfikujące konkretne wystąpienie błędu.",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "description": "Identyfikator śledzenia błędu.",
+            "nullable": true
+          }
+        },
+        "example": {
+          "title": "Unauthorized",
+          "status": 401,
+          "detail": "Wymagane jest uwierzytelnienie."
+        }
+      },
       "UpoPageResponse": {
         "required": [
           "downloadUrl",
@@ -13111,8 +14297,7 @@
             "description": "Data i godzina wygaśnięcia adresu. Po tej dacie link `DownloadUrl` nie będzie już aktywny.",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpoResponse": {
         "required": [
@@ -13127,21 +14312,15 @@
             },
             "description": "Lista stron UPO."
           }
-        },
-        "additionalProperties": false
+        }
       }
     },
     "securitySchemes": {
       "Bearer": {
         "type": "http",
         "description": "Token dostępu uzyskany w wyniku operacji uwierzytelnienia.",
-        "scheme": "Bearer",
+        "scheme": "bearer",
         "bearerFormat": "JWT"
-      },
-      "SessionToken": {
-        "type": "apiKey",
-        "name": "SessionToken",
-        "in": "header"
       }
     }
   },
