@@ -56,7 +56,7 @@
     "xades:auth": "node scripts/xades-auth-flow.mjs",
     "xades:check": "node scripts/xades-sign-check.mjs",
     "clean": "rimraf dist",
-    "release:pack": "pnpm run clean && pnpm pack --out ksef-client-%v.tgz",
+    "release:pack": "npm pack --ignore-scripts --pack-destination .",
     "prepack": "pnpm run build",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
