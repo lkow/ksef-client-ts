@@ -2,6 +2,7 @@ import type { HttpClient } from '@/utils/http.js';
 import { HttpClient as DefaultHttpClient } from '@/utils/http.js';
 import type { ApiV2Environment, ContextIdentifier, FormCode } from './types/common.js';
 import type { CertificateCredentials, TokenCredentials } from '@/types/auth.js';
+import { DefaultAuthManager, type AuthManager } from './auth-manager.js';
 import { AuthenticationV2Service } from './services/authentication.js';
 import {
   SessionV2Service,
@@ -40,6 +41,7 @@ import { BatchFileBuilder } from './batch.js';
 export interface KsefApiV2ClientOptions {
   environment: ApiV2Environment;
   httpClient?: HttpClient;
+  authManager?: AuthManager;
 }
 
 export class KsefApiV2Client {
@@ -54,6 +56,7 @@ export class KsefApiV2Client {
   readonly certificates: CertificateService;
   readonly testData?: TestDataService;
   readonly httpClient: HttpClient;
+  readonly authManager: AuthManager;
 
   constructor(options: KsefApiV2ClientOptions) {
     this.httpClient = options.httpClient ?? new DefaultHttpClient();
@@ -66,9 +69,74 @@ export class KsefApiV2Client {
     this.peppol = new PeppolService(this.httpClient, options.environment);
     this.certificates = new CertificateService(this.httpClient, options.environment);
     this.batchUploader = new BatchSessionUploader();
+
+    this.authManager = options.authManager ?? new DefaultAuthManager(async () => {
+      const refreshToken = this.authManager.getRefreshToken();
+      if (!refreshToken) {
+        return null;
+      }
+
+      const refreshed = await this.authentication.refreshAccessToken(refreshToken);
+      return refreshed.accessToken.token;
+    });
+    if (typeof (this.httpClient as { setAuthManager?: (authManager: AuthManager) => void }).setAuthManager === 'function') {
+      (this.httpClient as { setAuthManager: (authManager: AuthManager) => void }).setAuthManager(this.authManager);
+    }
+
     if (options.environment === 'test') {
       this.testData = new TestDataService(this.httpClient, options.environment);
     }
+  }
+
+  getAccessToken(): string | undefined {
+    return this.authManager.getAccessToken();
+  }
+
+  getRefreshToken(): string | undefined {
+    return this.authManager.getRefreshToken();
+  }
+
+  setAccessToken(token: string | undefined): void {
+    this.authManager.setAccessToken(token);
+  }
+
+  setRefreshToken(token: string | undefined): void {
+    this.authManager.setRefreshToken(token);
+  }
+
+  setAuthenticationTokens(tokens: { accessToken: string; refreshToken?: string }): void {
+    this.authManager.setAccessToken(tokens.accessToken);
+    if (tokens.refreshToken !== undefined) {
+      this.authManager.setRefreshToken(tokens.refreshToken);
+    }
+  }
+
+  clearAuthenticationTokens(): void {
+    this.authManager.setAccessToken(undefined);
+    this.authManager.setRefreshToken(undefined);
+  }
+
+  async redeemAndStoreTokens(authenticationToken: string) {
+    const tokens = await this.authentication.redeemTokens(authenticationToken);
+    this.setAuthenticationTokens({
+      accessToken: tokens.accessToken.token,
+      refreshToken: tokens.refreshToken.token
+    });
+    return tokens;
+  }
+
+  async refreshAndStoreAccessToken(refreshToken?: string) {
+    const token = refreshToken ?? this.authManager.getRefreshToken();
+    if (!token) {
+      throw new Error('Refresh token is not available. Set it on AuthManager first or pass it explicitly.');
+    }
+
+    const refreshed = await this.authentication.refreshAccessToken(token);
+    this.authManager.setAccessToken(refreshed.accessToken.token);
+    if (refreshToken) {
+      this.authManager.setRefreshToken(refreshToken);
+    }
+    return refreshed;
   }
 
   async authenticateWithToken(

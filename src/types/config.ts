@@ -1,4 +1,5 @@
 import type { RateLimitConfig } from './limits.js';
+import type { AuthManager } from '@/api2/auth-manager.js';
 
 /**
  * Shared HTTP client configuration used by the API v2 services.
@@ -25,4 +26,7 @@ export interface HttpClientOptions {
   
   /** Rate limiting configuration */
   rateLimitConfig?: RateLimitConfig;
+
+  /** Optional token manager used for auth header injection and 401 refresh */
+  authManager?: AuthManager;
 }

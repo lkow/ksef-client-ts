@@ -66,6 +66,25 @@ const authInit = await client.authentication.initiateXadesAuthenticationWithCert
 
 The helper builds and signs the XML payload specified in [`uwierzytelnianie.md`](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md#21-uwierzytelnianie-kwalifikowanym-podpisem-elektronicznym).
 
+## AuthManager (auto refresh)
+
+`KsefApiV2Client` now exposes a built-in `authManager` that can store access/refresh tokens and refresh access tokens automatically after HTTP 401.
+
+```ts
+import { KsefApiV2Client } from '@ksef/client';
+
+const client = new KsefApiV2Client({ environment: 'test' });
+
+// after your auth flow:
+client.setAuthenticationTokens({
+  accessToken: tokens.accessToken.token,
+  refreshToken: tokens.refreshToken.token
+});
+
+// helper methods:
+await client.refreshAndStoreAccessToken(); // uses stored refresh token
+```
+
 ## Sessions & encryption
 
 1. Open an online or batch session via `client.sessions.openOnlineSession` / `openBatchSession`.
@@ -125,21 +144,20 @@ Each method throws if invoked against production to make the TE-only contract ex
 
 | File | Purpose |
 | --- | --- |
-| `docs/CIRFMF_ALIGNMENT.md` | Gap analysis vs. RC5.7 (api-changelog, limity, uwierzytelnianie) |
-| `docs/API2_IMPLEMENTATION_NOTES.md` | Rationale for each service, with direct links to CIRFMF markdown |
 | `docs/API2_DEMO.md` | Step-by-step demo (TE token) + `.env.demo` description |
 | `docs/API_LIMITS.md` | Summary of `limity/limity-api.md` and how to apply it in client code |
 | `docs/CERTIFICATE_GUIDE.md` | Certificate management for API 2.0 (token + XAdES) |
 | `docs/MULTI_PARTY_GUIDE.md` | Patterns for multi-tenant integrations using API v2 |
 | `docs/OFFLINE_MODE_GUIDE.md` + `docs/OFFLINE_MODES_ARCHITECTURE.md` | Offline/technical correction flows, deadline tracking |
 | `docs/TOKEN_LIFECYCLE_GUIDE.md` | Token APIs end-to-end |
+| `docs/INTEGRATION_TESTING.md` | Integration testing setup and troubleshooting |
 
 ## Running the demo & tests
 
 1. `cp .env.demo.example .env.demo` and fill in `KSEF_V2_TOKEN`, `KSEF_V2_ENV`, `KSEF_V2_NIP`, `KSEF_V2_INVOICE`.
 2. `pnpm ts-node examples/api2-demo.ts` – manual demo.
-3. `pnpm test tests/api2-demo.test.ts` – Vitest will autoload `.env.demo` (skips if token missing).
-4. `pnpm lint` – ESLint with the provided Flat config.
+3. `pnpm run test:integration` – runs `tests/api2-demo.test.ts` and autoloads `.env.demo` (skips if token missing).
+4. `pnpm lint` – ESLint using `.eslintrc.cjs`.
 
 ## References
 

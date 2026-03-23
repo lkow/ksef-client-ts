@@ -158,7 +158,8 @@ export class AuthenticationV2Service {
       url: `${this.baseUrl}/auth/token/refresh`,
       headers: {
         'Authorization': `Bearer ${refreshToken}`
-      }
+      },
+      skipAuthRetry: true
     });
     return response.data;
   }

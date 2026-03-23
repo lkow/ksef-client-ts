@@ -8,6 +8,7 @@ import type { HttpClientOptions } from '@/types/config.js';
 import { KsefApiError, AuthenticationError, ValidationError } from '@/types/common.js';
 import { RateLimiter, createRateLimiter } from './rate-limiter.js';
 import type { RateLimitError } from '@/types/limits.js';
+import type { AuthManager } from '@/api2/auth-manager.js';
 
 export interface HttpRequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -17,6 +18,11 @@ export interface HttpRequestOptions {
   timeout?: number;
   maxRetries?: number;
   retryDelay?: number;
+  /**
+   * Prevent AuthManager refresh-on-401 logic for this request.
+   * Useful for `/auth/token/refresh` calls to avoid recursion.
+   */
+  skipAuthRetry?: boolean;
 }
 
 export interface HttpResponse<T = any> {
@@ -28,8 +34,9 @@ export interface HttpResponse<T = any> {
 
 export class HttpClient {
   private readonly agent: Agent;
-  private readonly options: Required<Omit<HttpClientOptions, 'rateLimitConfig'>>;
+  private readonly options: Required<Omit<HttpClientOptions, 'rateLimitConfig' | 'authManager'>>;
   private readonly rateLimiter?: RateLimiter;
+  private authManager: AuthManager | undefined;
 
   constructor(options: HttpClientOptions = {}) {
     this.options = {
@@ -45,6 +52,7 @@ export class HttpClient {
     if (options.rateLimitConfig) {
       this.rateLimiter = createRateLimiter(options.rateLimitConfig, false);
     }
+    this.authManager = options.authManager;
 
     this.agent = new Agent({
       keepAlive: this.options.keepAlive,
@@ -56,17 +64,41 @@ export class HttpClient {
   async request<T = any>(requestOptions: HttpRequestOptions): Promise<HttpResponse<T>> {
     const url = new URL(requestOptions.url);
     let lastError: Error | undefined;
+    let authRetryAttempted = false;
+    let currentOptions = this.prepareRequestOptions(requestOptions);
+    const maxRetries = currentOptions.maxRetries ?? this.options.maxRetries;
 
-    for (let attempt = 1; attempt <= (requestOptions.maxRetries ?? this.options.maxRetries); attempt++) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         // Check rate limit before making request
         if (this.rateLimiter) {
           await this.rateLimiter.acquireToken();
         }
 
-        return await this.executeRequest<T>(requestOptions, url);
+        const requestWithAuth = this.withManagedAuthorization(currentOptions);
+        return await this.executeRequest<T>(requestWithAuth, url);
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
+
+        if (
+          error instanceof AuthenticationError &&
+          this.authManager &&
+          !currentOptions.skipAuthRetry &&
+          !authRetryAttempted
+        ) {
+          authRetryAttempted = true;
+          const refreshedAccessToken = await this.authManager.onUnauthorized();
+          if (refreshedAccessToken) {
+            currentOptions = {
+              ...currentOptions,
+              headers: this.setAuthorizationHeader(
+                currentOptions.headers,
+                `Bearer ${refreshedAccessToken}`
+              )
+            };
+            continue;
+          }
+        }
         
         // Handle rate limit errors from rate limiter
         if (this.isRateLimitError(error)) {
@@ -82,7 +114,7 @@ export class HttpClient {
 
         // Handle 429 errors from server with Retry-After
         if (error instanceof KsefApiError && error.statusCode === 429) {
-          const retryAfter = this.parseRetryAfter(error) || (requestOptions.retryDelay ?? this.options.retryDelay) * Math.pow(2, attempt);
+          const retryAfter = this.parseRetryAfter(error) || (currentOptions.retryDelay ?? this.options.retryDelay) * Math.pow(2, attempt);
           await this.sleep(retryAfter);
           continue; // Retry after waiting
         }
@@ -93,12 +125,12 @@ export class HttpClient {
         }
 
         // If this was the last attempt, throw the error
-        if (attempt === (requestOptions.maxRetries ?? this.options.maxRetries)) {
+        if (attempt === maxRetries) {
           throw error;
         }
 
         // Wait before retrying with exponential backoff and jitter
-        const baseDelay = (requestOptions.retryDelay ?? this.options.retryDelay) * Math.pow(2, attempt - 1);
+        const baseDelay = (currentOptions.retryDelay ?? this.options.retryDelay) * Math.pow(2, attempt);
         const jitter = Math.random() * 1000; // Add up to 1 second of jitter
         const delay = baseDelay + jitter;
         await this.sleep(delay);
@@ -108,7 +140,7 @@ export class HttpClient {
     throw lastError!;
   }
 
-  private async executeRequest<T>(requestOptions: HttpRequestOptions, url: URL): Promise<HttpResponse<T>> {
+  protected async executeRequest<T>(requestOptions: HttpRequestOptions, url: URL): Promise<HttpResponse<T>> {
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = {
         'User-Agent': this.options.userAgent,
@@ -260,6 +292,47 @@ export class HttpClient {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private prepareRequestOptions(requestOptions: HttpRequestOptions): HttpRequestOptions {
+    return {
+      ...requestOptions,
+      headers: { ...(requestOptions.headers ?? {}) }
+    };
+  }
+
+  private withManagedAuthorization(requestOptions: HttpRequestOptions): HttpRequestOptions {
+    const accessToken = this.authManager?.getAccessToken();
+    if (!accessToken || this.hasAuthorizationHeader(requestOptions.headers)) {
+      return requestOptions;
+    }
+
+    return {
+      ...requestOptions,
+      headers: this.setAuthorizationHeader(requestOptions.headers, `Bearer ${accessToken}`)
+    };
+  }
+
+  private hasAuthorizationHeader(headers?: Record<string, string>): boolean {
+    if (!headers) {
+      return false;
+    }
+
+    return Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
+  }
+
+  private setAuthorizationHeader(
+    headers: Record<string, string> | undefined,
+    value: string
+  ): Record<string, string> {
+    const merged = { ...(headers ?? {}) };
+    const existingKey = Object.keys(merged).find((key) => key.toLowerCase() === 'authorization');
+    if (existingKey) {
+      merged[existingKey] = value;
+    } else {
+      merged.Authorization = value;
+    }
+    return merged;
+  }
+
   private isRateLimitError(error: unknown): error is RateLimitError {
     return typeof error === 'object' && error !== null && 'code' in error && error.code === 'RATE_LIMIT_EXCEEDED';
   }
@@ -322,6 +395,10 @@ export class HttpClient {
    */
   getRateLimiter(): RateLimiter | undefined {
     return this.rateLimiter;
+  }
+
+  setAuthManager(authManager: AuthManager | undefined): void {
+    this.authManager = authManager;
   }
 
   /**
