@@ -5,6 +5,7 @@ import {
   type ApiV2Environment
 } from '../types/common.js';
 import type { EncryptedInvoicePayload } from '../crypto/encryption.js';
+import { Routes } from '../routes.js';
 import type {
   ExportInvoicesResponse,
   InvoiceExportRequest,
@@ -32,7 +33,7 @@ export class InvoiceV2Service {
   ): Promise<SendInvoiceResponse> {
     const response = await this.httpClient.request<SendInvoiceResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/sessions/online/${sessionReferenceNumber}/invoices`,
+      url: `${this.baseUrl}${Routes.Sessions.onlineInvoices(sessionReferenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -54,7 +55,7 @@ export class InvoiceV2Service {
     });
     const response = await this.httpClient.request<QueryInvoicesMetadataResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/invoices/query/metadata${query}`,
+      url: `${this.baseUrl}${Routes.Invoices.queryMetadata}${query}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -70,7 +71,7 @@ export class InvoiceV2Service {
   ): Promise<ExportInvoicesResponse> {
     const response = await this.httpClient.request<ExportInvoicesResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/invoices/exports`,
+      url: `${this.baseUrl}${Routes.Invoices.exports}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       },
@@ -86,7 +87,7 @@ export class InvoiceV2Service {
   ): Promise<InvoiceExportStatusResponse> {
     const response = await this.httpClient.request<InvoiceExportStatusResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/invoices/exports/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Invoices.exportStatus(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -101,7 +102,7 @@ export class InvoiceV2Service {
   ): Promise<{ xml: string; hash?: string | null }> {
     const response = await this.httpClient.request<string>({
       method: 'GET',
-      url: `${this.baseUrl}/invoices/ksef/${ksefNumber}`,
+      url: `${this.baseUrl}${Routes.Invoices.byKsefNumber(ksefNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/xml'

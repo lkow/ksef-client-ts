@@ -5,6 +5,7 @@ import {
 } from '../types/common.js';
 import { buildQueryString } from '@/utils/http.js';
 import type { QueryPeppolProvidersResponse } from '../types/peppol.js';
+import { Routes } from '../routes.js';
 
 export class PeppolService {
   private readonly baseUrl: string;
@@ -26,7 +27,7 @@ export class PeppolService {
     });
     const response = await this.httpClient.request<QueryPeppolProvidersResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/peppol/query${query}`,
+      url: `${this.baseUrl}${Routes.Peppol.query}${query}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -35,4 +36,3 @@ export class PeppolService {
     return response.data;
   }
 }
-

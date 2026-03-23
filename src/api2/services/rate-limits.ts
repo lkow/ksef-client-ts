@@ -3,6 +3,7 @@ import {
   API_V2_BASE_URLS,
   type ApiV2Environment
 } from '../types/common.js';
+import { Routes } from '../routes.js';
 import type {
   EffectiveApiRateLimits,
   EffectiveContextLimits,
@@ -22,7 +23,7 @@ export class RateLimitsService {
   async getEffectiveLimits(accessToken: string): Promise<EffectiveApiRateLimits> {
     const response = await this.httpClient.request<EffectiveApiRateLimits>({
       method: 'GET',
-      url: `${this.baseUrl}/rate-limits`,
+      url: `${this.baseUrl}${Routes.RateLimits.effectiveApi}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -34,7 +35,7 @@ export class RateLimitsService {
   async getContextLimits(accessToken: string): Promise<EffectiveContextLimits> {
     const response = await this.httpClient.request<EffectiveContextLimits>({
       method: 'GET',
-      url: `${this.baseUrl}/limits/context`,
+      url: `${this.baseUrl}${Routes.RateLimits.context}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -46,7 +47,7 @@ export class RateLimitsService {
   async getSubjectLimits(accessToken: string): Promise<EffectiveSubjectLimits> {
     const response = await this.httpClient.request<EffectiveSubjectLimits>({
       method: 'GET',
-      url: `${this.baseUrl}/limits/subject`,
+      url: `${this.baseUrl}${Routes.RateLimits.subject}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }

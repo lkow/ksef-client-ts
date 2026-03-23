@@ -13,6 +13,7 @@ import {
 } from '../types/common.js';
 import { SecurityService } from '../security.js';
 import { SymmetricKeyManager, type SymmetricKeyMaterial } from '../crypto/symmetric.js';
+import { Routes } from '../routes.js';
 import type {
   SessionStatusResponse,
   SessionInvoicesResponse,
@@ -95,7 +96,7 @@ export class SessionV2Service {
 
     const response = await this.httpClient.request<OpenOnlineSessionResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/sessions/online`,
+      url: `${this.baseUrl}${Routes.Sessions.onlineOpen}`,
       headers,
       body: createRequestBody(requestBody)
     });
@@ -109,7 +110,7 @@ export class SessionV2Service {
   async closeOnlineSession(accessToken: string, referenceNumber: string): Promise<void> {
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/sessions/online/${referenceNumber}/close`,
+      url: `${this.baseUrl}${Routes.Sessions.onlineClose(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -141,7 +142,7 @@ export class SessionV2Service {
 
     const response = await this.httpClient.request<OpenBatchSessionResponse>({
       method: 'POST',
-      url: `${this.baseUrl}/sessions/batch`,
+      url: `${this.baseUrl}${Routes.Sessions.batchOpen}`,
       headers,
       body: createRequestBody(requestBody)
     });
@@ -155,7 +156,7 @@ export class SessionV2Service {
   async closeBatchSession(accessToken: string, referenceNumber: string): Promise<void> {
     await this.httpClient.request({
       method: 'POST',
-      url: `${this.baseUrl}/sessions/batch/${referenceNumber}/close`,
+      url: `${this.baseUrl}${Routes.Sessions.batchClose(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -168,7 +169,7 @@ export class SessionV2Service {
   ): Promise<SessionStatusResponse> {
     const response = await this.httpClient.request<SessionStatusResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/sessions/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.Sessions.byReference(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -223,7 +224,7 @@ export class SessionV2Service {
 
     const response = await this.httpClient.request<SessionsQueryResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/sessions${query}`,
+      url: `${this.baseUrl}${Routes.Sessions.root}${query}`,
       headers
     });
 
@@ -246,7 +247,7 @@ export class SessionV2Service {
 
     const response = await this.httpClient.request<SessionInvoicesResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/sessions/${referenceNumber}/invoices${query}`,
+      url: `${this.baseUrl}${Routes.Sessions.invoices(referenceNumber)}${query}`,
       headers
     });
 
@@ -269,7 +270,7 @@ export class SessionV2Service {
 
     const response = await this.httpClient.request<SessionInvoicesResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/sessions/${referenceNumber}/invoices/failed${query}`,
+      url: `${this.baseUrl}${Routes.Sessions.failedInvoices(referenceNumber)}${query}`,
       headers
     });
 
@@ -283,7 +284,7 @@ export class SessionV2Service {
   ): Promise<SessionInvoiceStatus> {
     const response = await this.httpClient.request<SessionInvoiceStatus>({
       method: 'GET',
-      url: `${this.baseUrl}/sessions/${referenceNumber}/invoices/${invoiceReferenceNumber}`,
+      url: `${this.baseUrl}${Routes.Sessions.invoiceStatus(referenceNumber, invoiceReferenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -308,7 +309,7 @@ export class SessionV2Service {
   ): Promise<UpoDownloadResult> {
     return await this.downloadUpoWithHash(
       accessToken,
-      `${this.baseUrl}/sessions/${referenceNumber}/invoices/ksef/${ksefNumber}/upo`
+      `${this.baseUrl}${Routes.Sessions.invoiceUpoByKsef(referenceNumber, ksefNumber)}`
     );
   }
 
@@ -328,7 +329,7 @@ export class SessionV2Service {
   ): Promise<UpoDownloadResult> {
     return await this.downloadUpoWithHash(
       accessToken,
-      `${this.baseUrl}/sessions/${referenceNumber}/invoices/${invoiceReferenceNumber}/upo`
+      `${this.baseUrl}${Routes.Sessions.invoiceUpoByReference(referenceNumber, invoiceReferenceNumber)}`
     );
   }
 
@@ -348,7 +349,7 @@ export class SessionV2Service {
   ): Promise<UpoDownloadResult> {
     return await this.downloadUpoWithHash(
       accessToken,
-      `${this.baseUrl}/sessions/${referenceNumber}/upo/${upoReferenceNumber}`
+      `${this.baseUrl}${Routes.Sessions.sessionUpo(referenceNumber, upoReferenceNumber)}`
     );
   }
 

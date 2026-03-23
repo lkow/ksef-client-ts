@@ -5,6 +5,7 @@ import {
   type ApiV2Environment
 } from '../types/common.js';
 import type { AuthenticationListResponse } from '../types/auth-session.js';
+import { Routes } from '../routes.js';
 
 export interface ListSessionsOptions {
   continuationToken?: string;
@@ -35,7 +36,7 @@ export class AuthSessionService {
 
     const response = await this.httpClient.request<AuthenticationListResponse>({
       method: 'GET',
-      url: `${this.baseUrl}/auth/sessions${query}`,
+      url: `${this.baseUrl}${Routes.AuthSessions.root}${query}`,
       headers
     });
     return response.data;
@@ -44,7 +45,7 @@ export class AuthSessionService {
   async revokeCurrentSession(token: string): Promise<void> {
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/auth/sessions/current`,
+      url: `${this.baseUrl}${Routes.AuthSessions.current}`,
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -54,7 +55,7 @@ export class AuthSessionService {
   async revokeSession(token: string, referenceNumber: string): Promise<void> {
     await this.httpClient.request({
       method: 'DELETE',
-      url: `${this.baseUrl}/auth/sessions/${referenceNumber}`,
+      url: `${this.baseUrl}${Routes.AuthSessions.byReference(referenceNumber)}`,
       headers: {
         'Authorization': `Bearer ${token}`
       }

@@ -1,5 +1,6 @@
 import type { HttpClient } from '@/utils/http.js';
 import { API_V2_BASE_URLS, type ApiV2Environment } from './types/common.js';
+import { Routes } from './routes.js';
 
 export type PublicKeyUsage = 'KsefTokenEncryption' | 'SymmetricKeyEncryption';
 
@@ -42,7 +43,7 @@ export class SecurityService {
 
     const response = await this.httpClient.request<PublicKeyCertificate[]>({
       method: 'GET',
-      url: `${this.baseUrl}/security/public-key-certificates`
+      url: `${this.baseUrl}${Routes.Security.publicKeyCertificates}`
     });
 
     const matching = response.data.find((cert) => cert.usage?.includes(usage));
