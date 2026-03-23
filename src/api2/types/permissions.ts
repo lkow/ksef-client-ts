@@ -251,6 +251,10 @@ export interface PersonPermissionsQueryRequest {
   permissionState?: PermissionState;
 }
 
+export interface EntityPermissionsQueryRequest {
+  contextIdentifier?: PersonalPermissionsContextIdentifier | null;
+}
+
 export interface SubunitPermissionsQueryRequest {
   subunitIdentifier?: ContextIdentifier;
 }

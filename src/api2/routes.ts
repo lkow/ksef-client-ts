@@ -55,6 +55,7 @@ export const Routes = {
     operationStatus: (referenceNumber: string) => `/permissions/operations/${referenceNumber}`,
     queryPersonal: '/permissions/query/personal/grants',
     queryPersons: '/permissions/query/persons/grants',
+    queryEntitiesGrants: '/permissions/query/entities/grants',
     querySubunits: '/permissions/query/subunits/grants',
     queryEntityRoles: '/permissions/query/entities/roles',
     querySubordinateEntityRoles: '/permissions/query/subordinate-entities/roles',
