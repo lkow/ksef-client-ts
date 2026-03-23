@@ -175,11 +175,71 @@ export interface PermissionsOperationStatusResponse {
 
 export type PermissionState = 'Active' | 'Inactive';
 
+// Personal Permissions Identifier Types
+export type PersonalPermissionsContextIdentifierType = 'Nip' | 'InternalId';
+
+export interface PersonalPermissionsContextIdentifier {
+  type: PersonalPermissionsContextIdentifierType;
+  value: string;
+}
+
+export type PersonalPermissionsAuthorizedIdentifierType = 'Nip';
+
+export interface PersonalPermissionsAuthorizedIdentifier {
+  type: PersonalPermissionsAuthorizedIdentifierType;
+  value: string;
+}
+
+export type PersonalPermissionsTargetIdentifierType = 'Nip' | 'AllPartners' | 'InternalId';
+
+export interface PersonalPermissionsTargetIdentifier {
+  type: PersonalPermissionsTargetIdentifierType;
+  value?: string | null;
+}
+
+// Subject Details for permissions responses
+export type PermissionsSubjectPersonDetailsType =
+  | 'PersonByIdentifier'
+  | 'PersonByFingerprintWithIdentifier'
+  | 'PersonByFingerprintWithoutIdentifier';
+
+export interface PermissionsSubjectPersonDetails {
+  subjectDetailsType: PermissionsSubjectPersonDetailsType;
+  firstName: string;
+  lastName: string;
+  identifier?: PersonIdentifier | null;
+  birthDate?: string | null;
+  idDocument?: IdDocument | null;
+}
+
+export type PermissionsSubjectEntityDetailsType = 'EntityByIdentifier' | 'EntityByFingerprint';
+
+export interface PermissionsSubjectEntityDetails {
+  subjectDetailsType: PermissionsSubjectEntityDetailsType;
+  fullName: string;
+  address?: string | null;
+}
+
+// PersonalPermission - response item from /permissions/query/personal/grants
+export interface PersonalPermission {
+  id: string;
+  permissionScope: PersonalPermissionType;
+  description: string;
+  permissionState: PermissionState;
+  startDate: string;
+  canDelegate: boolean;
+  contextIdentifier?: PersonalPermissionsContextIdentifier | null;
+  authorizedIdentifier?: PersonalPermissionsAuthorizedIdentifier | null;
+  targetIdentifier?: PersonalPermissionsTargetIdentifier | null;
+  subjectPersonDetails?: PermissionsSubjectPersonDetails | null;
+  subjectEntityDetails?: PermissionsSubjectEntityDetails | null;
+}
+
 export type PersonPermissionsQueryType = 'PermissionsInCurrentContext' | 'PermissionsGrantedInCurrentContext';
 
 export interface PersonalPermissionsQueryRequest {
-  contextIdentifier?: ContextIdentifier;
-  targetIdentifier?: ContextIdentifier;
+  contextIdentifier?: PersonalPermissionsContextIdentifier;
+  targetIdentifier?: PersonalPermissionsTargetIdentifier;
   permissionTypes?: PersonalPermissionType[];
   permissionState?: PermissionState;
 }

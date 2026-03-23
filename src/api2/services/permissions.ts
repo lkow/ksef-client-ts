@@ -20,7 +20,8 @@ import type {
   SubunitPermissionsQueryRequest,
   QueryPermissionsResponse,
   EntityAuthorizationPermissionsQueryRequest,
-  QueryEntityAuthorizationPermissionsResponse
+  QueryEntityAuthorizationPermissionsResponse,
+  PersonalPermission
 } from '../types/permissions.js';
 
 export class PermissionsV2Service {
@@ -207,8 +208,8 @@ export class PermissionsV2Service {
     accessToken: string,
     request: PersonalPermissionsQueryRequest,
     options: { pageOffset?: number; pageSize?: number } = {}
-  ): Promise<QueryPermissionsResponse<any>> {
-    const response = await this.httpClient.request<QueryPermissionsResponse<any>>({
+  ): Promise<QueryPermissionsResponse<PersonalPermission>> {
+    const response = await this.httpClient.request<QueryPermissionsResponse<PersonalPermission>>({
       method: 'POST',
       url: `${this.baseUrl}/permissions/query/personal/grants?pageOffset=${options.pageOffset ?? 0}&pageSize=${options.pageSize ?? 10}`,
       headers: {
