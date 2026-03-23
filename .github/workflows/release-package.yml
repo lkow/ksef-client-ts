@@ -26,8 +26,36 @@ permissions:
   contents: write
 
 jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Unit tests
+        run: pnpm run test:unit
+
   build-and-release:
     runs-on: ubuntu-latest
+    needs: quality-gates
 
     steps:
       - name: Checkout repository
@@ -84,6 +112,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Clean dist output
+        run: pnpm run clean
+
+      - name: Build package output
+        run: pnpm run build
 
       - name: Build and pack tarball
         run: pnpm run release:pack

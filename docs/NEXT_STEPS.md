@@ -19,7 +19,7 @@ Last updated: 2026-03-23
     - Script fails when implemented routes/services diverge from spec operations.
     - CI runs the check on PRs.
 
-- [ ] **P0-2: Release workflow quality gates**
+- [x] **P0-2: Release workflow quality gates**
   - Update release pipeline to run `lint`, `test:unit`, and `build` before packaging/release.
   - Acceptance:
     - Release job fails fast on lint/test/build failure.
