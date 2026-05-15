@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateKeyPairSync } from 'node:crypto';
+import { constants, generateKeyPairSync, verify } from 'node:crypto';
 import {
   signWithRSA_PSS,
   signWithECDSA_P256,
@@ -7,7 +7,7 @@ import {
   verifyRSA_PSS,
   extractPathForSigning,
   SignatureAlgorithm
-} from '../../src/api2/qr/signing.js';
+} from '../../src';
 
 describe('QR Signing', () => {
   // Generate test keys
@@ -75,6 +75,17 @@ describe('QR Signing', () => {
       expect(signature).toBeTruthy();
       // DER format has variable length, typically 70-72 bytes for P-256
     });
+
+    it('produces a SHA256withECDSA signature over the raw path data', () => {
+      const data = 'qr.ksef.mf.gov.pl/certificate/Nip/5252982896/5252982896/020CFEF0EC328278/hashvalue';
+      const signature = signWithECDSA_P256(data, ecKeyPair.privateKey, undefined, 'ieee-p1363');
+      const signatureBytes = Buffer.from(signature, 'base64url');
+
+      expect(verify('sha256', Buffer.from(data, 'utf8'), {
+        key: ecKeyPair.publicKey,
+        dsaEncoding: 'ieee-p1363'
+      }, signatureBytes)).toBe(true);
+    });
   });
 
   describe('signAuto', () => {
@@ -84,6 +95,11 @@ describe('QR Signing', () => {
 
       expect(signature).toBeTruthy();
       expect(verifyRSA_PSS(data, signature, rsaKeyPair.publicKey)).toBe(true);
+      expect(verify('sha256', Buffer.from(data, 'utf8'), {
+        key: rsaKeyPair.publicKey,
+        padding: constants.RSA_PKCS1_PSS_PADDING,
+        saltLength: 32
+      }, Buffer.from(signature, 'base64url'))).toBe(true);
     });
 
     it('auto-detects EC key and signs', () => {
@@ -263,4 +279,3 @@ describe('QR Signing', () => {
     });
   });
 });
-
