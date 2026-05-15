@@ -3,7 +3,7 @@
  * Based on: https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md
  */
 
-import { sign, verify, createHash, constants, createPublicKey, type KeyLike, KeyObject } from 'node:crypto';
+import { sign, verify, constants, createPublicKey, createPrivateKey, type KeyLike, KeyObject } from 'node:crypto';
 import { toBase64URL, fromBase64URL } from './types.js';
 
 /** Signature algorithm types supported by KSeF */
@@ -34,11 +34,6 @@ export function signWithRSA_PSS(
   privateKey: string | Buffer,
   password?: string
 ): string {
-  // Compute SHA-256 hash of the data
-  const hash = createHash('sha256').update(data, 'utf8').digest();
-
-  // Sign the hash directly using crypto.sign with null algorithm
-  // This signs the raw hash without re-hashing
   const signOptions: {
     key: string | Buffer;
     padding: number;
@@ -54,7 +49,7 @@ export function signWithRSA_PSS(
     signOptions.passphrase = password;
   }
 
-  const signature = sign(null, hash, signOptions);
+  const signature = sign('sha256', Buffer.from(data, 'utf8'), signOptions);
 
   return toBase64URL(signature.toString('base64'));
 }
@@ -79,11 +74,6 @@ export function signWithECDSA_P256(
   password?: string,
   format: 'ieee-p1363' | 'der' = 'ieee-p1363'
 ): string {
-  // Compute SHA-256 hash of the data
-  const hash = createHash('sha256').update(data, 'utf8').digest();
-
-  // Sign the hash directly using crypto.sign with null algorithm
-  // This signs the raw hash without re-hashing
   const signOptions: {
     key: string | Buffer;
     dsaEncoding: 'ieee-p1363' | 'der';
@@ -97,13 +87,20 @@ export function signWithECDSA_P256(
     signOptions.passphrase = password;
   }
 
-  const signature = sign(null, hash, signOptions);
+  const signature = sign('sha256', Buffer.from(data, 'utf8'), signOptions);
 
   if (format === 'ieee-p1363' && signature.length !== 64) {
     throw new Error(`Invalid ECDSA P-256 signature length: expected 64 bytes, got ${signature.length}`);
   }
 
   return toBase64URL(signature.toString('base64'));
+}
+
+function getPrivateKeyType(privateKey: string | Buffer, password?: string): KeyObject['asymmetricKeyType'] {
+  return createPrivateKey({
+    key: privateKey,
+    passphrase: password
+  }).asymmetricKeyType;
 }
 
 /**
@@ -119,26 +116,16 @@ export function signAuto(
   privateKey: string | Buffer,
   password?: string
 ): string {
-  const keyString = Buffer.isBuffer(privateKey) ? privateKey.toString('utf8') : privateKey;
+  const keyType = getPrivateKeyType(privateKey, password);
 
-  // Check for EC keys in various PEM formats:
-  // - BEGIN EC PRIVATE KEY: SEC1 format (EC-specific)
-  // - BEGIN PRIVATE KEY: PKCS#8 unencrypted (can be EC or RSA)
-  // - BEGIN ENCRYPTED PRIVATE KEY: PKCS#8 encrypted (can be EC or RSA)
-  if (keyString.includes('BEGIN EC PRIVATE KEY') || 
-      keyString.includes('BEGIN PRIVATE KEY') ||
-      keyString.includes('BEGIN ENCRYPTED PRIVATE KEY')) {
-    try {
-      return signWithECDSA_P256(data, privateKey, password);
-    } catch {
-      // If ECDSA fails (e.g., key is RSA in PKCS#8 format), fall back to RSA-PSS
-      return signWithRSA_PSS(data, privateKey, password);
-    }
-  } else if (keyString.includes('BEGIN RSA PRIVATE KEY')) {
+  if (keyType === 'ec') {
+    return signWithECDSA_P256(data, privateKey, password);
+  }
+  if (keyType === 'rsa') {
     return signWithRSA_PSS(data, privateKey, password);
   }
 
-  return signWithRSA_PSS(data, privateKey, password);
+  throw new Error(`Unsupported private key type for KSeF QR signature: ${keyType ?? 'unknown'}`);
 }
 
 /**
@@ -153,18 +140,14 @@ export function verifyRSA_PSS(
     const signatureBase64 = fromBase64URL(signatureBase64URL);
     const signature = Buffer.from(signatureBase64, 'base64');
 
-    // Compute the same SHA-256 hash
-    const hash = createHash('sha256').update(data, 'utf8').digest();
-
     // Ensure we have a KeyObject for verify - convert string/Buffer to KeyObject
     const keyObject: KeyObject = publicKey instanceof KeyObject 
       ? publicKey 
       : createPublicKey(publicKey);
 
-    // Verify the signature against the raw hash using crypto.verify with null algorithm
     return verify(
-      null,
-      hash,
+      'sha256',
+      Buffer.from(data, 'utf8'),
       {
         key: keyObject,
         padding: constants.RSA_PKCS1_PSS_PADDING,
