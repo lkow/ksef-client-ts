@@ -533,7 +533,7 @@ async function main() {
       `Upstream SHA256: ${sha256(upstreamSpecCanonical)}`,
       '',
       `Refresh command:`,
-      `curl -fsSL ${upstreamSpecUrl} -o docs/reference/ksef-api-v2-openapi.json`
+      `pnpm run update:openapi`
     ].join('\n'));
   }
 
