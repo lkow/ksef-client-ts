@@ -16,7 +16,7 @@ import {
   BatchSessionUploader,
   SessionV2Service
 } from './services/sessions.js';
-import { buildManifest, buildTarGz } from './batch/archive.js';
+import { buildManifest, buildTarGz, estimateTarSize } from './batch/archive.js';
 import { encryptPart, sha256Base64 } from './batch/crypto.js';
 import { correlateBatchResults, mergeSessionInvoices } from './batch/results.js';
 import type {
@@ -29,6 +29,8 @@ import type {
   PreparedBatch,
   SubmittedBatch
 } from './batch/types.js';
+
+const DEFAULT_MAX_UNCOMPRESSED_ARCHIVE_SIZE_BYTES = 256 * 1024 * 1024;
 
 export { BatchFileBuilder } from './batch/file-builder.js';
 export { sha256Base64 } from './batch/crypto.js';
@@ -64,6 +66,8 @@ export class KsefBatchService {
   async prepare(options: BatchPrepareOptions): Promise<PreparedBatch> {
     const compressionType = options.compression ?? 'TarGz';
     const partSizeBytes = options.partSizeBytes ?? 100_000_000;
+    const maxUncompressedArchiveSizeBytes = options.maxUncompressedArchiveSizeBytes
+      ?? DEFAULT_MAX_UNCOMPRESSED_ARCHIVE_SIZE_BYTES;
 
     if (compressionType !== 'TarGz') {
       throw new Error('High-level batch.prepare currently supports TarGz only. Use low-level helpers for custom archives.');
@@ -74,11 +78,22 @@ export class KsefBatchService {
     if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0 || partSizeBytes > 100_000_000) {
       throw new Error('partSizeBytes must be an integer between 1 and 100000000');
     }
+    if (!Number.isInteger(maxUncompressedArchiveSizeBytes) || maxUncompressedArchiveSizeBytes <= 0) {
+      throw new Error('maxUncompressedArchiveSizeBytes must be a positive integer');
+    }
 
     const manifest = buildManifest(options.invoices);
     assertUnique(manifest.map((item) => item.localId), 'localId');
     assertUnique(manifest.map((item) => item.fileName), 'fileName');
     assertUnique(manifest.map((item) => item.invoiceHash), 'invoiceHash');
+
+    const uncompressedArchiveSize = estimateTarSize(manifest);
+    if (uncompressedArchiveSize > maxUncompressedArchiveSizeBytes) {
+      throw new Error(
+        `Batch uncompressed tar size ${uncompressedArchiveSize} exceeds buffered prepare limit of `
+        + `${maxUncompressedArchiveSizeBytes} bytes`
+      );
+    }
 
     const archive = buildTarGz(options.invoices);
     const rawParts = splitBuffer(archive, partSizeBytes);

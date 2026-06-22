@@ -14,6 +14,13 @@ export function buildManifest(invoices: BatchInvoiceInput[]): BatchManifestItem[
   });
 }
 
+export function estimateTarSize(manifest: BatchManifestItem[]): number {
+  return manifest.reduce(
+    (size, item) => size + 512 + item.invoiceSize + tarPadding(item.invoiceSize),
+    1024
+  );
+}
+
 export function buildTarGz(invoices: BatchInvoiceInput[]): Buffer {
   const tarEntries: Buffer[] = [];
 
@@ -22,7 +29,7 @@ export function buildTarGz(invoices: BatchInvoiceInput[]): Buffer {
     const content = toBuffer(invoice.xml);
     tarEntries.push(createTarHeader(fileName, content.byteLength));
     tarEntries.push(content);
-    const padding = (512 - (content.byteLength % 512)) % 512;
+    const padding = tarPadding(content.byteLength);
     if (padding > 0) {
       tarEntries.push(Buffer.alloc(padding));
     }
@@ -62,6 +69,10 @@ function writeTarOctal(header: Buffer, value: number, offset: number, length: nu
     throw new Error(`Tar header value ${value} does not fit in ${length} bytes`);
   }
   header.write(`${valueString.padStart(length - 1, '0')}\0`, offset, length, 'ascii');
+}
+
+function tarPadding(size: number): number {
+  return (512 - (size % 512)) % 512;
 }
 
 function toBuffer(value: string | Buffer): Buffer {

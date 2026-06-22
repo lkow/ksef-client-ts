@@ -31,6 +31,11 @@ export interface BatchPrepareOptions {
   compression?: Extract<CompressionType, 'TarGz'>;
   /** KSeF limit: parts are split before encryption and cannot exceed 100 MB. */
   partSizeBytes?: number;
+  /**
+   * Safety cap for the buffered prepare flow, measured as tar size before gzip.
+   * Defaults to 256 MiB. Raise only when the caller controls process memory.
+   */
+  maxUncompressedArchiveSizeBytes?: number;
   encryptionMaterial?: SymmetricKeyMaterial;
 }
 
