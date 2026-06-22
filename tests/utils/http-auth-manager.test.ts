@@ -196,4 +196,30 @@ describe('HttpClient X-System-Warning integration', () => {
       status: 200
     });
   });
+
+  it('does not let onSystemWarning errors change a successful response', async () => {
+    const onSystemWarning = vi.fn(() => {
+      throw new Error('observer failed');
+    });
+    const run = vi.fn(async () => ({
+      status: 200,
+      statusText: 'OK',
+      headers: {
+        'X-System-Warning': '[WARN_1]: First warning'
+      },
+      data: { ok: true }
+    }));
+    const client = new TestHttpClient(run, { onSystemWarning });
+
+    await expect(client.request({
+      method: 'GET',
+      url: 'https://example.com/test'
+    })).resolves.toMatchObject({
+      status: 200,
+      data: { ok: true }
+    });
+
+    expect(onSystemWarning).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
 });

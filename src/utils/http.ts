@@ -353,13 +353,17 @@ export class HttpClient {
     }
 
     for (const warning of this.parseSystemWarningHeader(headerValue)) {
-      this.onSystemWarning({
-        ...warning,
-        raw: headerValue,
-        method: requestOptions.method,
-        url: url.toString(),
-        status: response.status
-      });
+      try {
+        this.onSystemWarning({
+          ...warning,
+          raw: headerValue,
+          method: requestOptions.method,
+          url: url.toString(),
+          status: response.status
+        });
+      } catch {
+        // System warning callbacks are observational and must not change HTTP request semantics.
+      }
     }
   }
 
