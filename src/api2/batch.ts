@@ -1,15 +1,10 @@
-import { createCipheriv, createHash } from 'node:crypto';
-import { gzipSync, constants as zlibConstants } from 'node:zlib';
 import type { HttpClient } from '@/utils/http.js';
 import type {
   ApiV2Environment,
   BatchFileInfo,
   BatchFilePartInfo,
-  CompressionType,
-  FormCode,
   PartUploadRequest
 } from './types/common.js';
-import type { SymmetricKeyMaterial } from './crypto/symmetric.js';
 import { SymmetricKeyManager } from './crypto/symmetric.js';
 import { SecurityService } from './security.js';
 import type {
@@ -19,132 +14,37 @@ import type {
 } from './types/session.js';
 import {
   BatchSessionUploader,
-  type OpenBatchSessionOptions,
-  type OpenBatchSessionResult,
   SessionV2Service
 } from './services/sessions.js';
+import { buildManifest, buildTarGz } from './batch/archive.js';
+import { encryptPart, sha256Base64 } from './batch/crypto.js';
+import { correlateBatchResults, mergeSessionInvoices } from './batch/results.js';
+import type {
+  BatchListOptions,
+  BatchManifestItem,
+  BatchPrepareOptions,
+  BatchResultCorrelation,
+  BatchSubmitOptions,
+  BatchWaitForCompletionOptions,
+  PreparedBatch,
+  SubmittedBatch
+} from './batch/types.js';
 
-export interface BatchFileBuildResult {
-  batchFile: BatchFileInfo;
-  parts: Buffer[];
-}
-
-export interface BatchInvoiceInput {
-  localId: string;
-  fileName: string;
-  xml: string | Buffer;
-}
-
-export interface BatchManifestItem {
-  localId: string;
-  fileName: string;
-  invoiceHash: string;
-  invoiceSize: number;
-}
-
-export interface BatchPrepareOptions {
-  formCode: FormCode;
-  invoices: BatchInvoiceInput[];
-  /**
-   * High-level preparation currently builds tar.gz archives. The low-level
-   * helpers remain available for callers that already own another archive.
-   */
-  compression?: Extract<CompressionType, 'TarGz'>;
-  /** KSeF limit: parts are split before encryption and cannot exceed 100 MB. */
-  partSizeBytes?: number;
-  encryptionMaterial?: SymmetricKeyMaterial;
-}
-
-export interface PreparedBatch {
-  formCode: FormCode;
-  compressionType: Extract<CompressionType, 'TarGz'>;
-  batchFile: BatchFileInfo;
-  encryptedParts: Buffer[];
-  manifest: BatchManifestItem[];
-  encryptionMaterial: SymmetricKeyMaterial;
-  archiveSize: number;
-  archiveHash: string;
-  partSizeBytes: number;
-}
-
-export interface BatchSubmitOptions {
-  uploadConcurrency?: number;
-  closeSession?: boolean;
-  session?: Omit<OpenBatchSessionOptions, 'encryptionMaterial'>;
-}
-
-export interface SubmittedBatch {
-  referenceNumber: string;
-  session: OpenBatchSessionResult;
-  batchFile: BatchFileInfo;
-  manifest: BatchManifestItem[];
-  partUploadRequests: PartUploadRequest[];
-}
-
-export interface BatchWaitForCompletionOptions {
-  initialDelayMs?: number;
-  maxDelayMs?: number;
-  backoffFactor?: number;
-  timeoutMs?: number;
-  maxAttempts?: number;
-  isTerminal?: (status: SessionStatusResponse) => boolean;
-}
-
-export interface BatchListOptions {
-  pageSize?: number;
-}
-
-export interface BatchCorrelatedResult {
-  localId: string;
-  fileName: string;
-  invoiceHash: string;
-  invoiceSize: number;
-  sessionInvoice: SessionInvoiceStatus;
-}
-
-export interface BatchResultCorrelation {
-  matched: BatchCorrelatedResult[];
-  unmatchedSessionInvoices: SessionInvoiceStatus[];
-  missingManifestItems: BatchManifestItem[];
-}
-
-export class BatchFileBuilder {
-  constructor(private readonly buffer: Buffer) {}
-
-  build(
-    partSize = 5 * 1024 * 1024,
-    options: { compressionType?: CompressionType | null } = {}
-  ): BatchFileBuildResult {
-    const parts: Buffer[] = [];
-    const partInfos: BatchFilePartInfo[] = [];
-
-    for (let offset = 0, ordinal = 1; offset < this.buffer.length; offset += partSize, ordinal++) {
-      const part = this.buffer.subarray(offset, Math.min(offset + partSize, this.buffer.length));
-      parts.push(part);
-      partInfos.push({
-        ordinalNumber: ordinal,
-        fileSize: part.byteLength,
-        fileHash: sha256Base64(part)
-      });
-    }
-
-    return {
-      batchFile: {
-        fileSize: this.buffer.byteLength,
-        fileHash: sha256Base64(this.buffer),
-        ...(options.compressionType ? { compressionType: options.compressionType } : {}),
-        fileParts: partInfos
-      },
-      parts
-    };
-  }
-}
-
-export function sha256Base64(buffer: Buffer): string {
-  const hash = createHash('sha256');
-  hash.update(buffer);
-  return hash.digest('base64');
-}
+export { BatchFileBuilder } from './batch/file-builder.js';
+export { sha256Base64 } from './batch/crypto.js';
+export type {
+  BatchCorrelatedResult,
+  BatchFileBuildResult,
+  BatchInvoiceInput,
+  BatchListOptions,
+  BatchManifestItem,
+  BatchPrepareOptions,
+  BatchResultCorrelation,
+  BatchSubmitOptions,
+  BatchWaitForCompletionOptions,
+  PreparedBatch,
+  SubmittedBatch
+} from './batch/types.js';
 
 export class KsefBatchService {
   private readonly symmetricManager: SymmetricKeyManager;
@@ -308,32 +208,7 @@ export class KsefBatchService {
     manifest: BatchManifestItem[],
     sessionInvoices: SessionInvoiceStatus[]
   ): BatchResultCorrelation {
-    const manifestByHash = new Map(manifest.map((item) => [item.invoiceHash, item]));
-    const matched: BatchCorrelatedResult[] = [];
-    const unmatchedSessionInvoices: SessionInvoiceStatus[] = [];
-    const matchedHashes = new Set<string>();
-
-    for (const sessionInvoice of sessionInvoices) {
-      const manifestItem = manifestByHash.get(sessionInvoice.invoiceHash);
-      if (!manifestItem) {
-        unmatchedSessionInvoices.push(sessionInvoice);
-        continue;
-      }
-      matched.push({
-        localId: manifestItem.localId,
-        fileName: manifestItem.fileName,
-        invoiceHash: manifestItem.invoiceHash,
-        invoiceSize: manifestItem.invoiceSize,
-        sessionInvoice
-      });
-      matchedHashes.add(manifestItem.invoiceHash);
-    }
-
-    return {
-      matched,
-      unmatchedSessionInvoices,
-      missingManifestItems: manifest.filter((item) => !matchedHashes.has(item.invoiceHash))
-    };
+    return correlateBatchResults(manifest, sessionInvoices);
   }
 
   async getMappedResults(
@@ -396,98 +271,12 @@ export class KsefBatchService {
   }
 }
 
-function buildManifest(invoices: BatchInvoiceInput[]): BatchManifestItem[] {
-  return invoices.map((invoice) => {
-    const invoiceBuffer = toBuffer(invoice.xml);
-    return {
-      localId: invoice.localId,
-      fileName: normalizeTarFileName(invoice.fileName),
-      invoiceHash: sha256Base64(invoiceBuffer),
-      invoiceSize: invoiceBuffer.byteLength
-    };
-  });
-}
-
-function buildTarGz(invoices: BatchInvoiceInput[]): Buffer {
-  const tarEntries: Buffer[] = [];
-
-  for (const invoice of invoices) {
-    const fileName = normalizeTarFileName(invoice.fileName);
-    const content = toBuffer(invoice.xml);
-    tarEntries.push(createTarHeader(fileName, content.byteLength));
-    tarEntries.push(content);
-    const padding = (512 - (content.byteLength % 512)) % 512;
-    if (padding > 0) {
-      tarEntries.push(Buffer.alloc(padding));
-    }
-  }
-
-  tarEntries.push(Buffer.alloc(1024));
-  return gzipSync(Buffer.concat(tarEntries), {
-    level: zlibConstants.Z_BEST_COMPRESSION
-  });
-}
-
-function createTarHeader(fileName: string, size: number): Buffer {
-  const header = Buffer.alloc(512, 0);
-  header.write(fileName, 0, 100, 'utf8');
-  writeTarOctal(header, 0o644, 100, 8);
-  writeTarOctal(header, 0, 108, 8);
-  writeTarOctal(header, 0, 116, 8);
-  writeTarOctal(header, size, 124, 12);
-  writeTarOctal(header, 0, 136, 12);
-  header.fill(0x20, 148, 156);
-  header.write('0', 156, 1, 'ascii');
-  header.write('ustar\0', 257, 6, 'ascii');
-  header.write('00', 263, 2, 'ascii');
-
-  let checksum = 0;
-  for (const byte of header) {
-    checksum += byte;
-  }
-  const checksumValue = checksum.toString(8).padStart(6, '0');
-  header.write(`${checksumValue}\0 `, 148, 8, 'ascii');
-  return header;
-}
-
-function writeTarOctal(header: Buffer, value: number, offset: number, length: number): void {
-  const valueString = value.toString(8);
-  if (valueString.length > length - 1) {
-    throw new Error(`Tar header value ${value} does not fit in ${length} bytes`);
-  }
-  header.write(`${valueString.padStart(length - 1, '0')}\0`, offset, length, 'ascii');
-}
-
 function splitBuffer(buffer: Buffer, partSizeBytes: number): Buffer[] {
   const parts: Buffer[] = [];
   for (let offset = 0; offset < buffer.length; offset += partSizeBytes) {
     parts.push(buffer.subarray(offset, Math.min(offset + partSizeBytes, buffer.length)));
   }
   return parts;
-}
-
-function encryptPart(part: Buffer, encryptionMaterial: SymmetricKeyMaterial): Buffer {
-  const cipher = createCipheriv(
-    'aes-256-cbc',
-    encryptionMaterial.symmetricKey,
-    encryptionMaterial.initializationVector
-  );
-  return Buffer.concat([cipher.update(part), cipher.final()]);
-}
-
-function toBuffer(value: string | Buffer): Buffer {
-  return Buffer.isBuffer(value) ? value : Buffer.from(value, 'utf8');
-}
-
-function normalizeTarFileName(fileName: string): string {
-  const normalized = fileName.replace(/\\/g, '/');
-  if (!normalized || normalized.startsWith('/') || normalized.includes('..') || normalized.includes('\0')) {
-    throw new Error(`Invalid invoice fileName: ${fileName}`);
-  }
-  if (Buffer.byteLength(normalized, 'utf8') > 100) {
-    throw new Error(`Invoice fileName is too long for the built-in tar writer: ${fileName}`);
-  }
-  return normalized;
 }
 
 function assertUnique(values: string[], label: string): void {
@@ -513,17 +302,6 @@ async function runWithConcurrency<T>(
     }
   });
   await Promise.all(workers);
-}
-
-function mergeSessionInvoices(
-  invoices: SessionInvoiceStatus[],
-  failedInvoices: SessionInvoiceStatus[]
-): SessionInvoiceStatus[] {
-  const merged = new Map<string, SessionInvoiceStatus>();
-  for (const invoice of [...invoices, ...failedInvoices]) {
-    merged.set(invoice.referenceNumber || `${invoice.invoiceHash}:${invoice.ordinalNumber}`, invoice);
-  }
-  return Array.from(merged.values());
 }
 
 function buildPaginationOptions(
