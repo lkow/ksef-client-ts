@@ -1,4 +1,10 @@
-import type { ApiV2ResponseStatus, EncryptionInfo, FormCode, Sha256HashBase64 } from './common.js';
+import type {
+  ApiV2ResponseStatus,
+  CompressionType,
+  EncryptionInfo,
+  FormCode,
+  Sha256HashBase64
+} from './common.js';
 
 export interface SendInvoiceRequestPayload {
   invoiceHash: Sha256HashBase64;
@@ -144,6 +150,7 @@ export interface QueryInvoicesMetadataResponse {
 export interface InvoiceExportRequest {
   encryption: EncryptionInfo;
   filters: InvoiceQueryFilters;
+  compressionType?: CompressionType | null;
 }
 
 export interface ExportInvoicesResponse {

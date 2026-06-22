@@ -180,6 +180,31 @@ describe('InvoiceV2Service', () => {
       expect(body.dateFrom).toBe('2024-01-01');
       expect(body.invoiceTypes).toEqual(['Sales', 'Purchase']);
     });
+
+    it('preserves requested export compression type', async () => {
+      mockHttpClient.mockResponse({ referenceNumber: 'exp-ref' });
+
+      const service = new InvoiceV2Service(mockHttpClient as any, 'test');
+
+      await service.exportInvoices('token', {
+        encryption: {
+          encryptedSymmetricKey: 'key',
+          initializationVector: 'iv'
+        },
+        filters: {
+          subjectType: 'Subject1',
+          dateRange: {
+            dateType: 'Issue',
+            from: '2024-01-01'
+          }
+        },
+        compressionType: 'TarGz'
+      });
+
+      const request = mockHttpClient.getLastRequest();
+      const body = JSON.parse(request?.body!);
+      expect(body.compressionType).toBe('TarGz');
+    });
   });
 
   describe('getInvoiceExportStatus', () => {
@@ -258,4 +283,3 @@ describe('InvoiceV2Service', () => {
     });
   });
 });
-
