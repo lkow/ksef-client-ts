@@ -5,6 +5,15 @@ import type { AuthManager } from '@/api2/auth-manager.js';
  * Shared HTTP client configuration used by the API v2 services.
  */
 
+export interface SystemWarningInfo {
+  code: string;
+  message: string;
+  raw: string;
+  method: string;
+  url: string;
+  status: number;
+}
+
 export interface HttpClientOptions {
   /** Request timeout in milliseconds (default: 30000) */
   timeout?: number;
@@ -29,4 +38,7 @@ export interface HttpClientOptions {
 
   /** Optional token manager used for auth header injection and 401 refresh */
   authManager?: AuthManager;
+
+  /** Called when KSeF returns the X-System-Warning response header */
+  onSystemWarning?: (warning: SystemWarningInfo) => void;
 }

@@ -4,7 +4,7 @@
 
 import { request } from 'node:https';
 import { Agent } from 'node:https';
-import type { HttpClientOptions } from '@/types/config.js';
+import type { HttpClientOptions, SystemWarningInfo } from '@/types/config.js';
 import { KsefApiError, AuthenticationError, ValidationError } from '@/types/common.js';
 import { RateLimiter, createRateLimiter } from './rate-limiter.js';
 import type { RateLimitError } from '@/types/limits.js';
@@ -34,9 +34,10 @@ export interface HttpResponse<T = any> {
 
 export class HttpClient {
   private readonly agent: Agent;
-  private readonly options: Required<Omit<HttpClientOptions, 'rateLimitConfig' | 'authManager'>>;
+  private readonly options: Required<Omit<HttpClientOptions, 'rateLimitConfig' | 'authManager' | 'onSystemWarning'>>;
   private readonly rateLimiter?: RateLimiter;
   private authManager: AuthManager | undefined;
+  private readonly onSystemWarning: ((warning: SystemWarningInfo) => void) | undefined;
 
   constructor(options: HttpClientOptions = {}) {
     this.options = {
@@ -47,6 +48,7 @@ export class HttpClient {
       headers: options.headers ?? {},
       userAgent: options.userAgent ?? 'KSeF-TypeScript-Client/1.7.0'
     };
+    this.onSystemWarning = options.onSystemWarning;
 
     // Initialize rate limiter if configured
     if (options.rateLimitConfig) {
@@ -76,7 +78,9 @@ export class HttpClient {
         }
 
         const requestWithAuth = this.withManagedAuthorization(currentOptions);
-        return await this.executeRequest<T>(requestWithAuth, url);
+        const response = await this.executeRequest<T>(requestWithAuth, url);
+        this.emitSystemWarnings(response, requestWithAuth, url);
+        return response;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
 
@@ -198,6 +202,7 @@ export class HttpClient {
             };
 
             if (res.statusCode && res.statusCode >= 400) {
+              this.emitSystemWarnings(response, requestOptions, url);
               this.handleErrorResponse(response);
             } else {
               resolve(response);
@@ -331,6 +336,55 @@ export class HttpClient {
       merged.Authorization = value;
     }
     return merged;
+  }
+
+  private emitSystemWarnings<T>(
+    response: HttpResponse<T>,
+    requestOptions: HttpRequestOptions,
+    url: URL
+  ): void {
+    if (!this.onSystemWarning) {
+      return;
+    }
+
+    const headerValue = this.getHeader(response.headers, 'x-system-warning');
+    if (!headerValue) {
+      return;
+    }
+
+    for (const warning of this.parseSystemWarningHeader(headerValue)) {
+      this.onSystemWarning({
+        ...warning,
+        raw: headerValue,
+        method: requestOptions.method,
+        url: url.toString(),
+        status: response.status
+      });
+    }
+  }
+
+  private getHeader(headers: Record<string, string>, name: string): string | undefined {
+    const key = Object.keys(headers).find((candidate) => candidate.toLowerCase() === name);
+    return key ? headers[key] : undefined;
+  }
+
+  private parseSystemWarningHeader(value: string): Array<Pick<SystemWarningInfo, 'code' | 'message'>> {
+    const warnings: Array<Pick<SystemWarningInfo, 'code' | 'message'>> = [];
+    const warningPattern = /\[(?<code>[^\]]+)\]: (?<message>[^|]+)/g;
+
+    for (const match of value.matchAll(warningPattern)) {
+      const code = match.groups?.code?.trim();
+      const message = match.groups?.message?.trim();
+      if (code && message) {
+        warnings.push({ code, message });
+      }
+    }
+
+    if (warnings.length > 0) {
+      return warnings;
+    }
+
+    return [{ code: 'UNKNOWN', message: value }];
   }
 
   private isRateLimitError(error: unknown): error is RateLimitError {

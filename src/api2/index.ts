@@ -43,7 +43,7 @@ export * from './crypto/symmetric.js';
 export * from './crypto/encryption.js';
 export * from './auth/xades-request.js';
 export { HttpClient } from '../utils/http.js';
-export type { HttpClientOptions } from '../types/config.js';
+export type { HttpClientOptions, SystemWarningInfo } from '../types/config.js';
 export * from '../types/limits.js';
 export * from './rate-limits.js';
 export * from './qr/index.js';
