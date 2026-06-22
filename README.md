@@ -95,6 +95,32 @@ await client.refreshAndStoreAccessToken(); // uses stored refresh token
 
 All hashes and payload sizes follow the RC5.7 base64/SHA-256 rules from `przeglad-kluczowych-zmian-ksef-api-2-0.md`.
 
+## High-level batch workflow
+
+For production batch submission, prefer `client.batch` over manually wiring archive metadata. The high-level workflow keeps persistence outside the SDK while owning the KSeF mechanics: tar.gz archive creation, invoice hash manifest, part splitting before encryption, AES encryption, part upload, polling, pagination, and result correlation by `invoiceHash`.
+
+```ts
+const prepared = await client.batch.prepare({
+  formCode,
+  invoices: [
+    { localId: 'invoice-123', fileName: 'invoice-123.xml', xml }
+  ]
+});
+
+const submitted = await client.batch.submit(accessToken, prepared, {
+  uploadConcurrency: 4
+});
+
+const finalStatus = await client.batch.waitForCompletion(accessToken, submitted.referenceNumber);
+const results = await client.batch.getMappedResults(
+  accessToken,
+  submitted.referenceNumber,
+  prepared.manifest
+);
+```
+
+The existing `createBatchSession(accessToken, formCode, buffer, ...)` helper remains available as a low-level/advanced API for callers that already own archive construction and part metadata.
+
 ## Permissions, tokens & sessions
 
 - `client.permissions`: covers `/permissions/**` (personal/entity grants, indirect/self-billing, EU administration, attachment consent) and the `/permissions/query/...` endpoints. Pagination matches the `pageOffset + pageSize` semantics described in `api-changelog.md` (RC5.x additions).

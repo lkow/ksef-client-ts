@@ -35,8 +35,9 @@ import type {
 } from './types/invoice.js';
 import type { SessionStatusResponse, SessionInvoicesResponse } from './types/session.js';
 import type { FormCode as BatchFormCode, PartUploadRequest } from './types/common.js';
+import type { CompressionType } from './types/common.js';
 import type { BatchFileBuildResult } from './batch.js';
-import { BatchFileBuilder } from './batch.js';
+import { BatchFileBuilder, KsefBatchService } from './batch.js';
 
 export interface KsefApiV2ClientOptions {
   environment: ApiV2Environment;
@@ -48,6 +49,7 @@ export class KsefApiV2Client {
   readonly authentication: AuthenticationV2Service;
   readonly sessions: SessionV2Service;
   readonly invoices: InvoiceV2Service;
+  readonly batch: KsefBatchService;
   readonly batchUploader: BatchSessionUploader;
   readonly permissions: PermissionsV2Service;
   readonly tokens: TokenService;
@@ -69,6 +71,7 @@ export class KsefApiV2Client {
     this.peppol = new PeppolService(this.httpClient, options.environment);
     this.certificates = new CertificateService(this.httpClient, options.environment);
     this.batchUploader = new BatchSessionUploader();
+    this.batch = new KsefBatchService(this.sessions, this.batchUploader, this.httpClient, options.environment);
 
     this.authManager = options.authManager ?? new DefaultAuthManager(async () => {
       const refreshToken = this.authManager.getRefreshToken();
@@ -178,19 +181,23 @@ export class KsefApiV2Client {
     accessToken: string,
     formCode: BatchFormCode,
     batchBuffer: Buffer,
-    options?: { partSize?: number; session?: OpenBatchSessionOptions }
+    options?: { partSize?: number; compressionType?: CompressionType | null; session?: OpenBatchSessionOptions }
   ): Promise<{ session: Awaited<ReturnType<SessionV2Service['openBatchSession']>>; batchParts: BatchFileBuildResult['parts'] }>;
   async createBatchSession(
     accessToken: string,
     formCode: BatchFormCode,
     batchBuffer: Buffer,
-    partSizeOrOptions?: number | { partSize?: number; session?: OpenBatchSessionOptions }
+    partSizeOrOptions?: number | { partSize?: number; compressionType?: CompressionType | null; session?: OpenBatchSessionOptions }
   ): Promise<{ session: Awaited<ReturnType<SessionV2Service['openBatchSession']>>; batchParts: BatchFileBuildResult['parts'] }> {
     const partSize = typeof partSizeOrOptions === 'number' ? partSizeOrOptions : partSizeOrOptions?.partSize;
+    const compressionType = typeof partSizeOrOptions === 'number' ? undefined : partSizeOrOptions?.compressionType;
     const sessionOptions = typeof partSizeOrOptions === 'number' ? undefined : partSizeOrOptions?.session;
 
     const builder = new BatchFileBuilder(batchBuffer);
-    const batch = builder.build(partSize);
+    const batch = builder.build(
+      partSize,
+      compressionType === undefined ? {} : { compressionType }
+    );
     const session = await this.sessions.openBatchSession(accessToken, batch.batchFile, formCode, sessionOptions);
     return { session, batchParts: batch.parts };
   }

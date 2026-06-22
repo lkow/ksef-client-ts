@@ -113,6 +113,7 @@ export interface FormCode {
 }
 
 export type UpoVersion = 'upo-v4-2' | 'upo-v4-3';
+export type CompressionType = 'Zip' | 'TarGz';
 
 export interface EncryptionInfo {
   encryptedSymmetricKey: string;
@@ -138,6 +139,7 @@ export interface BatchFilePartInfo {
 export interface BatchFileInfo {
   fileSize: number;
   fileHash: string;
+  compressionType?: CompressionType | null;
   fileParts: BatchFilePartInfo[];
 }
 

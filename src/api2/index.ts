@@ -10,6 +10,22 @@ export * from './types/peppol.js';
 export * from './types/certificates.js';
 export * from './client.js';
 export * from './auth-manager.js';
+export {
+  BatchFileBuilder,
+  KsefBatchService
+} from './batch.js';
+export type {
+  BatchCorrelatedResult,
+  BatchInvoiceInput,
+  BatchListOptions,
+  BatchManifestItem,
+  BatchPrepareOptions,
+  BatchResultCorrelation,
+  BatchSubmitOptions,
+  BatchWaitForCompletionOptions,
+  PreparedBatch,
+  SubmittedBatch
+} from './batch.js';
 export * from './routes.js';
 export * from './services/authentication.js';
 export * from './services/auth-sessions.js';
