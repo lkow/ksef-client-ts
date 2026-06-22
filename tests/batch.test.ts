@@ -1,6 +1,40 @@
-import { describe, it, expect } from 'vitest';
-import { createHash } from 'node:crypto';
-import { BatchFileBuilder, sha256Base64 } from '../src/api2/batch.js';
+import { describe, it, expect, vi } from 'vitest';
+import { createDecipheriv, randomBytes } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
+import {
+  BatchFileBuilder,
+  KsefBatchService,
+  sha256Base64,
+  type PreparedBatch
+} from '../src/api2/batch.js';
+import type { SymmetricKeyMaterial } from '../src/api2/crypto/symmetric.js';
+import type { SessionInvoiceStatus } from '../src/api2/types/session.js';
+
+const formCode = { systemCode: 'FA (3)', schemaVersion: '1-0E', value: 'FA' } as const;
+
+function createTestMaterial(): SymmetricKeyMaterial {
+  const initializationVector = randomBytes(16);
+  return {
+    symmetricKey: randomBytes(32),
+    initializationVector,
+    encryptedSymmetricKey: 'encrypted-key',
+    initializationVectorBase64: initializationVector.toString('base64')
+  };
+}
+
+function decryptPart(part: Buffer, material: SymmetricKeyMaterial): Buffer {
+  const decipher = createDecipheriv('aes-256-cbc', material.symmetricKey, material.initializationVector);
+  return Buffer.concat([decipher.update(part), decipher.final()]);
+}
+
+function createBatchService(sessions: any = {}, uploader: any = {}) {
+  return new KsefBatchService(
+    sessions,
+    uploader,
+    {} as any,
+    'test'
+  );
+}
 
 describe('sha256Base64', () => {
   it('produces correct SHA-256 hash for known input', () => {
@@ -45,6 +79,14 @@ describe('BatchFileBuilder', () => {
       const result = builder.build();
 
       expect(result.batchFile.fileSize).toBe(data.byteLength);
+    });
+
+    it('includes compression type when requested', () => {
+      const data = Buffer.from('test content');
+      const builder = new BatchFileBuilder(data);
+      const result = builder.build(undefined, { compressionType: 'TarGz' });
+
+      expect(result.batchFile.compressionType).toBe('TarGz');
     });
 
     it('splits file into multiple parts at correct boundaries', () => {
@@ -154,3 +196,193 @@ describe('BatchFileBuilder', () => {
   });
 });
 
+describe('KsefBatchService', () => {
+  describe('prepare', () => {
+    it('builds a TarGz archive, encrypted parts, and manifest keyed by local id', async () => {
+      const material = createTestMaterial();
+      const service = createBatchService();
+
+      const prepared = await service.prepare({
+        formCode,
+        encryptionMaterial: material,
+        partSizeBytes: 120,
+        invoices: [
+          { localId: 'invoice-1', fileName: 'invoice-1.xml', xml: '<Faktura>1</Faktura>' },
+          { localId: 'invoice-2', fileName: 'invoice-2.xml', xml: '<Faktura>2</Faktura>' }
+        ]
+      });
+
+      expect(prepared.compressionType).toBe('TarGz');
+      expect(prepared.batchFile.compressionType).toBe('TarGz');
+      expect(prepared.manifest).toEqual([
+        {
+          localId: 'invoice-1',
+          fileName: 'invoice-1.xml',
+          invoiceHash: sha256Base64(Buffer.from('<Faktura>1</Faktura>')),
+          invoiceSize: Buffer.byteLength('<Faktura>1</Faktura>')
+        },
+        {
+          localId: 'invoice-2',
+          fileName: 'invoice-2.xml',
+          invoiceHash: sha256Base64(Buffer.from('<Faktura>2</Faktura>')),
+          invoiceSize: Buffer.byteLength('<Faktura>2</Faktura>')
+        }
+      ]);
+      expect(prepared.batchFile.fileParts).toHaveLength(prepared.encryptedParts.length);
+      prepared.encryptedParts.forEach((part, index) => {
+        expect(prepared.batchFile.fileParts[index]).toMatchObject({
+          ordinalNumber: index + 1,
+          fileSize: part.byteLength,
+          fileHash: sha256Base64(part)
+        });
+      });
+
+      const archive = Buffer.concat(prepared.encryptedParts.map((part) => decryptPart(part, material)));
+      expect(prepared.batchFile.fileHash).toBe(sha256Base64(archive));
+      const tar = gunzipSync(archive);
+      expect(tar.includes(Buffer.from('invoice-1.xml'))).toBe(true);
+      expect(tar.includes(Buffer.from('<Faktura>1</Faktura>'))).toBe(true);
+      expect(tar.includes(Buffer.from('invoice-2.xml'))).toBe(true);
+      expect(tar.includes(Buffer.from('<Faktura>2</Faktura>'))).toBe(true);
+    });
+
+    it('rejects duplicate invoice hashes because results could not be correlated safely', async () => {
+      const service = createBatchService();
+
+      await expect(service.prepare({
+        formCode,
+        encryptionMaterial: createTestMaterial(),
+        invoices: [
+          { localId: 'invoice-1', fileName: 'invoice-1.xml', xml: '<Faktura>same</Faktura>' },
+          { localId: 'invoice-2', fileName: 'invoice-2.xml', xml: '<Faktura>same</Faktura>' }
+        ]
+      })).rejects.toThrow(/duplicate invoiceHash/);
+    });
+  });
+
+  describe('submit', () => {
+    it('opens a batch session with prepared metadata, uploads parts by ordinal number, and closes the session', async () => {
+      const material = createTestMaterial();
+      const sessions = {
+        openBatchSession: vi.fn(),
+        closeBatchSession: vi.fn().mockResolvedValue(undefined)
+      };
+      const uploader = {
+        uploadPart: vi.fn().mockResolvedValue(undefined)
+      };
+      const service = createBatchService(sessions, uploader);
+      const prepared: PreparedBatch = await service.prepare({
+        formCode,
+        encryptionMaterial: material,
+        partSizeBytes: 80,
+        invoices: [{ localId: 'invoice-1', fileName: 'invoice-1.xml', xml: '<Faktura>1</Faktura>' }]
+      });
+      sessions.openBatchSession.mockResolvedValue({
+        referenceNumber: 'batch-ref',
+        partUploadRequests: prepared.encryptedParts
+          .map((_, index) => ({
+            ordinalNumber: index + 1,
+            method: 'PUT' as const,
+            url: `https://upload.test/${index + 1}`,
+            headers: {}
+          }))
+          .reverse(),
+        encryptionMaterial: material
+      });
+
+      const submitted = await service.submit('token', prepared, { uploadConcurrency: 2 });
+
+      expect(submitted.referenceNumber).toBe('batch-ref');
+      expect(sessions.openBatchSession).toHaveBeenCalledWith('token', prepared.batchFile, formCode, {
+        encryptionMaterial: material
+      });
+      expect(uploader.uploadPart).toHaveBeenCalledTimes(prepared.encryptedParts.length);
+      expect(uploader.uploadPart).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ ordinalNumber: 1 }),
+        prepared.encryptedParts[0]
+      );
+      if (prepared.encryptedParts.length > 1) {
+        expect(uploader.uploadPart).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({ ordinalNumber: 2 }),
+          prepared.encryptedParts[1]
+        );
+      }
+      expect(sessions.closeBatchSession).toHaveBeenCalledWith('token', 'batch-ref');
+    });
+  });
+
+  describe('waitForCompletion', () => {
+    it('polls until session status is terminal', async () => {
+      const sessions = {
+        getSessionStatus: vi.fn()
+          .mockResolvedValueOnce({ status: { code: 150, description: 'Processing' } })
+          .mockResolvedValueOnce({ status: { code: 200, description: 'Succeeded' } })
+      };
+      const service = createBatchService(sessions);
+
+      const status = await service.waitForCompletion('token', 'batch-ref', {
+        initialDelayMs: 0,
+        maxDelayMs: 0,
+        maxAttempts: 2
+      });
+
+      expect(status.status.code).toBe(200);
+      expect(sessions.getSessionStatus).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('list and correlation helpers', () => {
+    it('auto-paginates invoice lists and correlates rows by invoiceHash', async () => {
+      const invoiceHash = sha256Base64(Buffer.from('<Faktura>1</Faktura>'));
+      const sessions = {
+        listSessionInvoices: vi.fn()
+          .mockResolvedValueOnce({
+            continuationToken: 'next',
+            invoices: []
+          })
+          .mockResolvedValueOnce({
+            continuationToken: null,
+            invoices: [createSessionInvoice({ invoiceHash, referenceNumber: 'inv-ref' })]
+          }),
+        listFailedSessionInvoices: vi.fn().mockResolvedValue({
+          continuationToken: null,
+          invoices: [createSessionInvoice({ invoiceHash: 'other-hash', referenceNumber: 'failed-ref' })]
+        })
+      };
+      const service = createBatchService(sessions);
+      const manifest = [{
+        localId: 'invoice-1',
+        fileName: 'invoice-1.xml',
+        invoiceHash,
+        invoiceSize: Buffer.byteLength('<Faktura>1</Faktura>')
+      }];
+
+      const result = await service.getMappedResults('token', 'batch-ref', manifest, { pageSize: 10 });
+
+      expect(sessions.listSessionInvoices).toHaveBeenNthCalledWith(1, 'token', 'batch-ref', {
+        pageSize: 10
+      });
+      expect(sessions.listSessionInvoices).toHaveBeenNthCalledWith(2, 'token', 'batch-ref', {
+        continuationToken: 'next',
+        pageSize: 10
+      });
+      expect(result.matched).toHaveLength(1);
+      expect(result.matched[0].localId).toBe('invoice-1');
+      expect(result.unmatchedSessionInvoices).toHaveLength(1);
+      expect(result.missingManifestItems).toHaveLength(0);
+    });
+  });
+});
+
+function createSessionInvoice(overrides: Partial<SessionInvoiceStatus>): SessionInvoiceStatus {
+  return {
+    ordinalNumber: 1,
+    referenceNumber: 'invoice-ref',
+    invoiceHash: 'hash',
+    invoicingDate: '2026-01-01',
+    status: { code: 200, description: 'Accepted' },
+    ...overrides
+  };
+}
