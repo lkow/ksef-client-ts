@@ -258,6 +258,19 @@ describe('KsefBatchService', () => {
         ]
       })).rejects.toThrow(/duplicate invoiceHash/);
     });
+
+    it('rejects batches above the buffered uncompressed archive size limit', async () => {
+      const service = createBatchService();
+
+      await expect(service.prepare({
+        formCode,
+        encryptionMaterial: createTestMaterial(),
+        maxUncompressedArchiveSizeBytes: 2047,
+        invoices: [
+          { localId: 'invoice-1', fileName: 'invoice-1.xml', xml: '<Faktura>1</Faktura>' }
+        ]
+      })).rejects.toThrow(/uncompressed tar size 2048 exceeds buffered prepare limit of 2047 bytes/);
+    });
   });
 
   describe('submit', () => {
