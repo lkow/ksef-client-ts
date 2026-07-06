@@ -30,6 +30,9 @@ coverage/
 # ESBuild meta files
 meta.json
 
+# Local clones of official KSeF repositories
+ksef-official/
+
 # Temporary folders
 tmp/
 temp/

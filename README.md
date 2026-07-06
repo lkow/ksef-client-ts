@@ -188,6 +188,6 @@ Each method throws if invoked against production to make the TE-only contract ex
 ## References
 
 - [`CIRFMF/ksef-docs`](https://github.com/CIRFMF/ksef-docs): `przeglad-kluczowych-zmian-ksef-api-2-0.md`, `api-changelog.md`, `uwierzytelnianie.md`, `limity/limity-api.md`, `tokeny-ksef.md`, `auth/sesje.md`, `dane-testowe-scenariusze.md`, `tryby-offline.md`, `kody-qr.md`.
-- OpenAPI snapshot: `docs/reference/ksef-api-v2-openapi.json` (downloaded 2025-11-18 from TE docs portal).
+- OpenAPI snapshot: `docs/reference/ksef-api-v2-openapi.json` (refresh with `pnpm run update:openapi`; override source with `KSEF_OPENAPI_UPSTREAM_URL`).
 
 Pull requests should link the relevant CIRFMF source (section + date) so we can keep parity with MF releases.
