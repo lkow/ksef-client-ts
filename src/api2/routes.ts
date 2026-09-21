@@ -41,6 +41,12 @@ export const Routes = {
     exportStatus: (referenceNumber: string) => `/invoices/exports/${referenceNumber}`,
     byKsefNumber: (ksefNumber: string) => `/invoices/ksef/${ksefNumber}`
   },
+  CollectiveIdentifiers: {
+    root: '/collective-identifiers',
+    query: '/collective-identifiers/query',
+    invoices: '/collective-identifiers/invoices',
+    byKsefNumber: (ksefNumber: string) => `/collective-identifiers/ksef/${encodeURIComponent(ksefNumber)}`
+  },
   Permissions: {
     grantPersons: '/permissions/persons/grants',
     grantEntities: '/permissions/entities/grants',

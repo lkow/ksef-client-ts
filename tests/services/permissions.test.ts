@@ -20,7 +20,7 @@ describe('PermissionsV2Service', () => {
 
       await service.grantPersonPermissions('token', {
         subjectIdentifier: { type: 'Pesel', value: '12345678901' },
-        permissions: ['InvoiceRead'],
+        permissions: ['InvoiceRead', 'CollectiveIdentifierManage'],
         description: 'Grant invoice read',
         subjectDetails: {
           subjectDetailsType: 'PersonByIdentifier',
@@ -35,6 +35,7 @@ describe('PermissionsV2Service', () => {
       expect(request?.method).toBe('POST');
       expect(request?.url).toContain('/permissions/persons/grants');
       expect(request?.headers?.['Authorization']).toBe('Bearer token');
+      expect(JSON.parse(request!.body!).permissions).toEqual(['InvoiceRead', 'CollectiveIdentifierManage']);
     });
   });
 

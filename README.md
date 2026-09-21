@@ -121,6 +121,39 @@ const results = await client.batch.getMappedResults(
 
 The existing `createBatchSession(accessToken, formCode, buffer, ...)` helper remains available as a low-level/advanced API for callers that already own archive construction and part metadata.
 
+## Collective payment identifiers
+
+`client.collectiveIdentifiers` supports the four collective identifier operations in the TR/demo 2.8.0 OpenAPI snapshot. An identifier references existing KSeF invoices from the same seller; generating one does not initiate or confirm a payment. Availability depends on the API version deployed in the selected environment.
+
+```ts
+const { collectiveIdentifierNumber } = await client.collectiveIdentifiers.generate(accessToken, {
+  invoices: [
+    { ksefNumber: firstKsefNumber, payment: { amount: 100, currency: 'PLN' } },
+    { ksefNumber: secondKsefNumber, payment: { amount: 45, currency: 'PLN' } }
+  ]
+});
+// Persist collectiveIdentifierNumber with the local payment reference.
+
+const request = { collectiveIdentifierNumbers: [collectiveIdentifierNumber] };
+let page = await client.collectiveIdentifiers.queryInvoices(accessToken, request, { pageSize: 500 });
+const invoices = [...page.invoices];
+while (page.continuationToken) {
+  page = await client.collectiveIdentifiers.queryInvoices(accessToken, request, {
+    pageSize: 500,
+    continuationToken: page.continuationToken
+  });
+  invoices.push(...page.invoices);
+}
+```
+
+Use `query(accessToken, { dateCreatedFrom, dateCreatedTo, ...filters }, options)` to list identifiers for the context, or `queryByKsefNumber(accessToken, ksefNumber, options)` to find identifiers containing an invoice. All three reads return one page and accept `{ pageSize, continuationToken }`; the cursor is sent in the `x-continuation-token` header.
+
+- Creation requires at least two invoices from one seller. Read the current maximum from `client.rateLimits.getContextLimits(accessToken)` (`collectiveIdentifier.maxInvoices`, default 500); the SDK leaves server-side validation and dynamic limits to KSeF.
+- `queryInvoices` accepts up to ten identifiers and a page size of 10–500. Other queries accept a page size of 10–200; `query` permits a date interval of at most 100 days. The API default page size is 10.
+- `payment` and `description` may be absent or null. `detailsHidden: true` means access restrictions hid those values; it does not mean the payment amount is zero.
+- One of `InvoiceRead`, `InvoiceWrite`, or `CollectiveIdentifierManage` is required. Person grants and KSeF token permission types support `CollectiveIdentifierManage`.
+- `generate` disables transport retries and refresh-on-401 for that request, even when retries are enabled on the shared HTTP client. Supply a valid access token. If a response is lost, creation may have succeeded: reconcile the uncertain result before explicitly trying again. The contract does not promise idempotent creation. Read operations retain the HTTP client's retry policy.
+
 ## Permissions, tokens & sessions
 
 - `client.permissions`: covers `/permissions/**` (personal/entity grants, indirect/self-billing, EU administration, attachment consent) and the `/permissions/query/...` endpoints. Pagination matches the `pageOffset + pageSize` semantics described in `api-changelog.md` (RC5.x additions).

@@ -8,7 +8,8 @@ export type PersonPermissionType =
   | 'InvoiceRead'
   | 'Introspection'
   | 'SubunitManage'
-  | 'EnforcementOperations';
+  | 'EnforcementOperations'
+  | 'CollectiveIdentifierManage';
 
 export type PersonalPermissionType =
   | PersonPermissionType

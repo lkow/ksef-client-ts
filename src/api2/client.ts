@@ -17,6 +17,7 @@ import { RateLimitsService } from './services/rate-limits.js';
 import { TestDataService } from './services/test-data.js';
 import { PeppolService } from './services/peppol.js';
 import { CertificateService } from './services/certificates.js';
+import { CollectiveIdentifiersService } from './services/collective-identifiers.js';
 import {
   encryptInvoicePayload,
   encryptInvoiceCorrectionPayload,
@@ -56,6 +57,7 @@ export class KsefApiV2Client {
   readonly rateLimits: RateLimitsService;
   readonly peppol: PeppolService;
   readonly certificates: CertificateService;
+  readonly collectiveIdentifiers: CollectiveIdentifiersService;
   readonly testData?: TestDataService;
   readonly httpClient: HttpClient;
   readonly authManager: AuthManager;
@@ -70,6 +72,7 @@ export class KsefApiV2Client {
     this.rateLimits = new RateLimitsService(this.httpClient, options.environment);
     this.peppol = new PeppolService(this.httpClient, options.environment);
     this.certificates = new CertificateService(this.httpClient, options.environment);
+    this.collectiveIdentifiers = new CollectiveIdentifiersService(this.httpClient, options.environment);
     this.batchUploader = new BatchSessionUploader();
     this.batch = new KsefBatchService(this.sessions, this.batchUploader, this.httpClient, options.environment);
 
