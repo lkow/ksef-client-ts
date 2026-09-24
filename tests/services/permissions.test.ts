@@ -47,7 +47,7 @@ describe('PermissionsV2Service', () => {
 
       await service.grantEntityPermissions('token', {
         subjectIdentifier: { type: 'Nip', value: '1111111111' },
-        permissions: [{ type: 'InvoiceRead', canDelegate: true }],
+        permissions: [{ type: 'InvoiceRead', canDelegate: true }, { type: 'CollectiveIdentifierManage', canDelegate: true }],
         description: 'Grant invoice read',
         subjectDetails: { fullName: 'Example Corp' }
       });
@@ -55,6 +55,10 @@ describe('PermissionsV2Service', () => {
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
       expect(request?.url).toContain('/permissions/entities/grants');
+      expect(JSON.parse(request!.body!).permissions).toEqual([
+        { type: 'InvoiceRead', canDelegate: true },
+        { type: 'CollectiveIdentifierManage', canDelegate: true }
+      ]);
     });
   });
 
@@ -87,7 +91,7 @@ describe('PermissionsV2Service', () => {
       await service.grantIndirectPermissions('token', {
         subjectIdentifier: { type: 'Pesel', value: '12345678901' },
         targetIdentifier: { type: 'AllPartners' },
-        permissions: ['InvoiceRead'],
+        permissions: ['InvoiceRead', 'CollectiveIdentifierManage'],
         description: 'Indirect invoice read',
         subjectDetails: {
           subjectDetailsType: 'PersonByIdentifier',
@@ -101,6 +105,7 @@ describe('PermissionsV2Service', () => {
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
       expect(request?.url).toContain('/permissions/indirect/grants');
+      expect(JSON.parse(request!.body!).permissions).toEqual(['InvoiceRead', 'CollectiveIdentifierManage']);
     });
   });
 
