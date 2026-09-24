@@ -8,6 +8,7 @@ export * from './types/test-data.js';
 export * from './types/rate-limits.js';
 export * from './types/peppol.js';
 export * from './types/certificates.js';
+export * from './types/collective-identifiers.js';
 export * from './client.js';
 export * from './auth-manager.js';
 export {
@@ -37,6 +38,7 @@ export * from './services/test-data.js';
 export * from './services/rate-limits.js';
 export * from './services/peppol.js';
 export * from './services/certificates.js';
+export * from './services/collective-identifiers.js';
 export * from './security.js';
 export * from './crypto/token.js';
 export * from './crypto/symmetric.js';

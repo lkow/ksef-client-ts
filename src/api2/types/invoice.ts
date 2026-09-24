@@ -170,6 +170,8 @@ export interface InvoicePackagePart {
 }
 
 export interface InvoicePackage {
+  /** API 2.7.1; absent on older environments. */
+  compressionType?: CompressionType;
   invoiceCount: number;
   size: number;
   parts: InvoicePackagePart[];

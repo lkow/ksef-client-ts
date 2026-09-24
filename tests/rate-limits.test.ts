@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { DEFAULT_RATE_LIMITS } from '../src/types/limits.js';
+import { RateLimiter } from '../src/utils/rate-limiter.js';
+import openApi from '../docs/reference/ksef-api-v2-openapi.json';
 import {
   mapEndpointToRateLimitCategory,
   getRateLimitConfigForEndpoint,
@@ -25,9 +27,78 @@ const EFFECTIVE_LIMITS: EffectiveApiRateLimits = {
 describe('rate limit helpers', () => {
   it('maps endpoints to categories', () => {
     expect(mapEndpointToRateLimitCategory('POST', '/sessions/online')).toBe('onlineSession');
-    expect(mapEndpointToRateLimitCategory('POST', '/sessions/online/5F3/close')).toBe('onlineSession');
+    expect(mapEndpointToRateLimitCategory('POST', '/sessions/online/5F3/close')).toBe('onlineSessionClose');
     expect(mapEndpointToRateLimitCategory('GET', '/sessions/123/invoices/456')).toBe('invoiceStatus');
     expect(mapEndpointToRateLimitCategory('GET', '/unknown/endpoint')).toBeUndefined();
+  });
+
+  it.each([
+    ['POST', '/sessions/online/REF/close', 'onlineSessionClose'],
+    ['POST', '/sessions/batch/REF/close', 'batchSessionClose'],
+    ['POST', '/auth/challenge', 'anonymous'],
+    ['POST', '/auth/xades-signature', 'anonymous'],
+    ['POST', '/auth/ksef-token', 'anonymous'],
+    ['GET', '/security/public-key-certificates', 'anonymous'],
+    ['GET', '/peppol/query', 'anonymous'],
+    ['POST', '/collective-identifiers', 'collectiveIdentifier'],
+    ['POST', '/collective-identifiers/query', 'collectiveIdentifier'],
+    ['POST', '/collective-identifiers/invoices', 'collectiveIdentifier'],
+    ['GET', '/collective-identifiers/ksef/NUMBER', 'collectiveIdentifier']
+  ] as const)('uses the official category for %s %s', (method, path, category) => {
+    const limits = openApi.paths['/rate-limits'].get.responses['200'].content['application/json'].example;
+    const config = getRateLimitConfigForEndpoint(method, path, { effectiveLimits: limits });
+
+    expect(mapEndpointToRateLimitCategory(method, path)).toBe(category);
+    expect(config.requestsPerSecond).toBe(limits[category].perSecond);
+    expect(config.requestsPerMinute).toBe(limits[category].perMinute === -1 ? Infinity : limits[category].perMinute);
+    expect(config.requestsPerHour).toBe(limits[category].perHour === -1 ? Infinity : limits[category].perHour);
+  });
+
+  it.each([
+    ['/sessions/online/REF/close', 'onlineSession'],
+    ['/sessions/batch/REF/close', 'batchSession']
+  ] as const)('keeps legacy limits for %s when close categories are absent', (path, category) => {
+    const config = getRateLimitConfigForEndpoint('POST', path, { effectiveLimits: EFFECTIVE_LIMITS });
+    expect(config.requestsPerSecond).toBe(EFFECTIVE_LIMITS[category].perSecond);
+    expect(config.requestsPerMinute).toBe(EFFECTIVE_LIMITS[category].perMinute);
+    expect(config.requestsPerHour).toBe(EFFECTIVE_LIMITS[category].perHour);
+  });
+
+  it('allows anonymous requests with unlimited minute/hour windows while enforcing the second limit', async () => {
+    vi.useFakeTimers();
+    try {
+      const limits = openApi.paths['/rate-limits'].get.responses['200'].content['application/json'].example;
+      const config = getRateLimitConfigForEndpoint('POST', '/auth/challenge', {
+        baseConfig: { ...DEFAULT_RATE_LIMITS, enabled: true },
+        effectiveLimits: limits
+      });
+      const limiter = new RateLimiter(config);
+      for (let i = 0; i < limits.anonymous.perSecond; i++) {
+        await expect(limiter.acquireToken()).resolves.toBeUndefined();
+      }
+      await expect(limiter.acquireToken()).rejects.toMatchObject({ code: 'RATE_LIMIT_EXCEEDED' });
+      vi.advanceTimersByTime(1000);
+      await expect(limiter.acquireToken()).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(['/auth/challenge', '/collective-identifiers'])('keeps the legacy other limits for %s', (path) => {
+    const config = getRateLimitConfigForEndpoint('POST', path, { effectiveLimits: EFFECTIVE_LIMITS });
+    expect(config).toMatchObject({
+      requestsPerSecond: EFFECTIVE_LIMITS.other.perSecond,
+      requestsPerMinute: EFFECTIVE_LIMITS.other.perMinute,
+      requestsPerHour: EFFECTIVE_LIMITS.other.perHour
+    });
+  });
+
+  it('represents disabled global limits without applying them to an endpoint category', () => {
+    const limits = openApi.paths['/rate-limits'].get.responses['200'].content['application/json'].example;
+    const config = buildRateLimitConfigFromCategory('global', limits, DEFAULT_RATE_LIMITS);
+    expect(config).toMatchObject({ requestsPerSecond: Infinity, requestsPerMinute: Infinity, requestsPerHour: Infinity });
+    expect(getRateLimitConfigForEndpoint('POST', '/invoices/exports', { effectiveLimits: limits }).requestsPerSecond)
+      .toBe(limits.invoiceExport.perSecond);
   });
 
   it('builds config overrides for categories', () => {

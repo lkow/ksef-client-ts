@@ -46,12 +46,16 @@ describe('RateLimitsService', () => {
         maxInvoiceSizeInMB: 50,
         maxInvoiceWithAttachmentSizeInMB: 100,
         maxInvoices: 500
+      },
+      collectiveIdentifier: {
+        maxInvoices: 500
       }
     });
 
     const service = new RateLimitsService(mockHttpClient as any, 'test');
 
-    await service.getContextLimits('token');
+    const result = await service.getContextLimits('token');
+    expect(result.collectiveIdentifier?.maxInvoices).toBe(500);
 
     const request = mockHttpClient.getLastRequest();
     expect(request?.method).toBe('GET');

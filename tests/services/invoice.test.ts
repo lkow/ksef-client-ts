@@ -208,6 +208,27 @@ describe('InvoiceV2Service', () => {
   });
 
   describe('getInvoiceExportStatus', () => {
+    it.each(['Zip', 'TarGz'] as const)('exposes %s compression returned by the API', async (compressionType) => {
+      mockHttpClient.mockResponse({
+        status: { code: 200, description: 'Completed' },
+        package: { invoiceCount: 0, size: 0, parts: [], isTruncated: false, compressionType }
+      });
+      const service = new InvoiceV2Service(mockHttpClient as any, 'test');
+      const result = await service.getInvoiceExportStatus('token', 'export-ref');
+      expect(result.package?.compressionType).toBe(compressionType);
+    });
+
+    it('preserves a legacy package without assuming a compression format', async () => {
+      mockHttpClient.mockResponse({
+        status: { code: 200, description: 'Completed' },
+        package: { invoiceCount: 0, size: 0, parts: [], isTruncated: false }
+      });
+      const service = new InvoiceV2Service(mockHttpClient as any, 'test');
+      const result = await service.getInvoiceExportStatus('token', 'export-ref');
+      expect(result.package).toBeDefined();
+      expect(result.package?.compressionType).toBeUndefined();
+    });
+
     it('calls GET /invoices/exports/{ref}', async () => {
       mockHttpClient.mockResponse({
         referenceNumber: 'export-ref',

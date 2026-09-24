@@ -8,7 +8,8 @@ export type PersonPermissionType =
   | 'InvoiceRead'
   | 'Introspection'
   | 'SubunitManage'
-  | 'EnforcementOperations';
+  | 'EnforcementOperations'
+  | 'CollectiveIdentifierManage';
 
 export type PersonalPermissionType =
   | PersonPermissionType
@@ -16,9 +17,11 @@ export type PersonalPermissionType =
 
 export type PermissionType = PersonalPermissionType;
 
-export type EntityPermissionType = 'InvoiceWrite' | 'InvoiceRead';
+export type EntityPermissionType = 'InvoiceWrite' | 'InvoiceRead' | 'CollectiveIdentifierManage';
 
-export type IndirectPermissionType = 'InvoiceRead' | 'InvoiceWrite';
+export type EntityPermissionItemScope = EntityPermissionType;
+
+export type IndirectPermissionType = 'InvoiceRead' | 'InvoiceWrite' | 'CollectiveIdentifierManage';
 
 export type EuEntityPermissionType = 'InvoiceWrite' | 'InvoiceRead';
 

@@ -4,9 +4,9 @@ import type { EffectiveApiRateLimits, RateLimitCategory, EffectiveApiRateLimitVa
 
 const ENDPOINT_CATEGORY_MAP: Record<string, RateLimitCategory> = {
   'POST /sessions/online': 'onlineSession',
-  'POST /sessions/online/*/close': 'onlineSession',
+  'POST /sessions/online/*/close': 'onlineSessionClose',
   'POST /sessions/batch': 'batchSession',
-  'POST /sessions/batch/*/close': 'batchSession',
+  'POST /sessions/batch/*/close': 'batchSessionClose',
   'POST /sessions/online/*/invoices': 'invoiceSend',
   'GET /sessions/*/invoices/*': 'invoiceStatus',
   'GET /sessions': 'sessionList',
@@ -16,7 +16,16 @@ const ENDPOINT_CATEGORY_MAP: Record<string, RateLimitCategory> = {
   'POST /invoices/query/metadata': 'invoiceMetadata',
   'POST /invoices/exports': 'invoiceExport',
   'GET /invoices/exports/*': 'invoiceExportStatus',
-  'GET /invoices/ksef/*': 'invoiceDownload'
+  'GET /invoices/ksef/*': 'invoiceDownload',
+  'POST /collective-identifiers': 'collectiveIdentifier',
+  'POST /collective-identifiers/query': 'collectiveIdentifier',
+  'POST /collective-identifiers/invoices': 'collectiveIdentifier',
+  'GET /collective-identifiers/ksef/*': 'collectiveIdentifier',
+  'GET /security/public-key-certificates': 'anonymous',
+  'GET /peppol/query': 'anonymous',
+  'POST /auth/challenge': 'anonymous',
+  'POST /auth/xades-signature': 'anonymous',
+  'POST /auth/ksef-token': 'anonymous'
 };
 
 export function mapEndpointToRateLimitCategory(
@@ -32,7 +41,11 @@ export function buildRateLimitConfigFromCategory(
   effectiveLimits: EffectiveApiRateLimits,
   baseConfig: RateLimitConfig
 ): RateLimitConfig {
-  const values = effectiveLimits[category];
+  // Before API 2.8.0, opening and closing sessions shared a category.
+  const values = effectiveLimits[category]
+    ?? (category === 'onlineSessionClose' ? effectiveLimits.onlineSession : undefined)
+    ?? (category === 'batchSessionClose' ? effectiveLimits.batchSession : undefined)
+    ?? (category === 'anonymous' || category === 'collectiveIdentifier' ? effectiveLimits.other : undefined);
   if (!values) {
     return baseConfig;
   }
@@ -52,12 +65,7 @@ export function getRateLimitConfigForEndpoint(
     return fallback;
   }
   const category = mapEndpointToRateLimitCategory(method, path);
-  if (!category) {
-    const otherValues = options.effectiveLimits.other;
-    return otherValues ? applyValuesToConfig(otherValues, fallback) : fallback;
-  }
-  const categoryValues = options.effectiveLimits[category];
-  return categoryValues ? applyValuesToConfig(categoryValues, fallback) : fallback;
+  return buildRateLimitConfigFromCategory(category ?? 'other', options.effectiveLimits, fallback);
 }
 
 function applyValuesToConfig(
@@ -66,8 +74,8 @@ function applyValuesToConfig(
 ): RateLimitConfig {
   return {
     ...baseConfig,
-    requestsPerSecond: values.perSecond,
-    requestsPerMinute: values.perMinute,
-    requestsPerHour: values.perHour
+    requestsPerSecond: values.perSecond === -1 ? Infinity : values.perSecond,
+    requestsPerMinute: values.perMinute === -1 ? Infinity : values.perMinute,
+    requestsPerHour: values.perHour === -1 ? Infinity : values.perHour
   };
 }
