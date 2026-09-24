@@ -66,6 +66,10 @@ const authInit = await client.authentication.initiateXadesAuthenticationWithCert
 
 The helper builds and signs the XML payload specified in [`uwierzytelnianie.md`](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md#21-uwierzytelnianie-kwalifikowanym-podpisem-elektronicznym).
 
+## Local XAdES diagnostics
+
+The four analytical tools in [`scripts/`](scripts/README.md) help inspect signatures and XML canonicalization. `pnpm xades:auth` sends authentication requests to KSeF; the other tools run locally. See the guide for prerequisites, environment variables, examples, and sensitive-output precautions. These tools are not a complete XAdES validator.
+
 ## AuthManager (auto refresh)
 
 `KsefApiV2Client` now exposes a built-in `authManager` that can store access/refresh tokens and refresh access tokens automatically after HTTP 401.

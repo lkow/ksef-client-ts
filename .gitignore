@@ -27,6 +27,13 @@ coverage/
 .env
 .env.local
 
+# Local certificates and authentication artifacts
+/certs/
+/xades-artifacts/
+
+# Local planning notes
+/docs/NEXT_STEPS.md
+
 # ESBuild meta files
 meta.json
 
