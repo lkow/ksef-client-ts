@@ -19,7 +19,7 @@ describe('TokenService', () => {
       const service = new TokenService(mockHttpClient as any, 'test');
 
       await service.generateToken('access-token', {
-        permissions: ['InvoiceRead', 'InvoiceWrite', 'CollectiveIdentifierManage'],
+        permissions: ['InvoiceRead', 'InvoiceWrite', 'Introspection', 'CollectiveIdentifierManage'],
         description: 'Test token for API access'
       });
 
@@ -29,7 +29,7 @@ describe('TokenService', () => {
       expect(request?.headers?.['Authorization']).toBe('Bearer access-token');
 
       const body = JSON.parse(request?.body!);
-      expect(body.permissions).toEqual(['InvoiceRead', 'InvoiceWrite', 'CollectiveIdentifierManage']);
+      expect(body.permissions).toEqual(['InvoiceRead', 'InvoiceWrite', 'Introspection', 'CollectiveIdentifierManage']);
       expect(body.description).toBe('Test token for API access');
     });
 
