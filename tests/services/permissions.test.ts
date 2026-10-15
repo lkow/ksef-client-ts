@@ -252,19 +252,23 @@ describe('PermissionsV2Service', () => {
   });
 
   describe('queryPersonalPermissions', () => {
-    it('calls POST /permissions/query/personal/grants', async () => {
+    it('calls POST /permissions/query/personal/grants and returns owner permissions', async () => {
       mockHttpClient.mockResponse({
         permissions: [],
-        totalCount: 0
+        ownerPermissions: ['InvoiceRead', 'Introspection', 'CollectiveIdentifierManage'],
+        hasMore: false
       });
 
       const service = new PermissionsV2Service(mockHttpClient as any, 'test');
 
-      await service.queryPersonalPermissions('token', {});
+      const result = await service.queryPersonalPermissions('token', {});
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('POST');
       expect(request?.url).toContain('/permissions/query/personal/grants');
+      expect(result.ownerPermissions).toEqual(['InvoiceRead', 'Introspection', 'CollectiveIdentifierManage']);
+      expect(result.permissions).toEqual([]);
+      expect(result.hasMore).toBe(false);
     });
 
     it('includes pagination params', async () => {
