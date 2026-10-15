@@ -24,7 +24,7 @@ import type {
   QueryPermissionsResponse,
   EntityAuthorizationPermissionsQueryRequest,
   QueryEntityAuthorizationPermissionsResponse,
-  PersonalPermission
+  QueryPersonalPermissionsResponse
 } from '../types/permissions.js';
 
 export class PermissionsV2Service {
@@ -211,12 +211,12 @@ export class PermissionsV2Service {
     accessToken: string,
     request: PersonalPermissionsQueryRequest,
     options: { pageOffset?: number; pageSize?: number } = {}
-  ): Promise<QueryPermissionsResponse<PersonalPermission>> {
+  ): Promise<QueryPersonalPermissionsResponse> {
     const query = buildQueryString({
       pageOffset: options.pageOffset ?? 0,
       pageSize: options.pageSize ?? 10
     });
-    const response = await this.httpClient.request<QueryPermissionsResponse<PersonalPermission>>({
+    const response = await this.httpClient.request<QueryPersonalPermissionsResponse>({
       method: 'POST',
       url: `${this.baseUrl}${Routes.Permissions.queryPersonal}${query}`,
       headers: {

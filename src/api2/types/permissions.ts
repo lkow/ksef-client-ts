@@ -11,6 +11,16 @@ export type PersonPermissionType =
   | 'EnforcementOperations'
   | 'CollectiveIdentifierManage';
 
+export type OwnerPermissionScope =
+  | 'CredentialsManage'
+  | 'CredentialsRead'
+  | 'InvoiceWrite'
+  | 'InvoiceRead'
+  | 'Introspection'
+  | 'SubunitManage'
+  | 'EnforcementOperations'
+  | 'CollectiveIdentifierManage';
+
 export type PersonalPermissionType =
   | PersonPermissionType
   | 'VatUeManage';
@@ -265,6 +275,10 @@ export interface SubunitPermissionsQueryRequest {
 export interface QueryPermissionsResponse<T> {
   permissions: T[];
   hasMore: boolean;
+}
+
+export interface QueryPersonalPermissionsResponse extends QueryPermissionsResponse<PersonalPermission> {
+  ownerPermissions?: OwnerPermissionScope[] | null;
 }
 
 export type EntityAuthorizationPermissionType = 'SelfInvoicing' | 'TaxRepresentative' | 'RRInvoicing' | 'PefInvoicing';

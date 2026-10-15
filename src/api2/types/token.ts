@@ -7,6 +7,7 @@ export type TokenPermissionType =
   | 'CredentialsManage'
   | 'SubunitManage'
   | 'EnforcementOperations'
+  | 'Introspection'
   | 'CollectiveIdentifierManage';
 
 export type AuthenticationTokenStatus = 'Pending' | 'Active' | 'Revoking' | 'Revoked' | 'Failed';
