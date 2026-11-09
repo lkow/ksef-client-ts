@@ -4,7 +4,14 @@ import { Routes } from './routes.js';
 
 export type PublicKeyUsage = 'KsefTokenEncryption' | 'SymmetricKeyEncryption';
 
+export interface PublicKeyInfo {
+  pem: string;
+  /** Not published by older environments. */
+  publicKeyId?: string;
+}
+
 interface PublicKeyCertificate {
+  publicKeyId?: string;
   certificate: string;
   validFrom: string;
   validTo: string;
@@ -15,6 +22,7 @@ interface CachedPublicKey {
   usage: PublicKeyUsage;
   pem: string;
   validTo: string;
+  publicKeyId?: string;
 }
 
 /**
@@ -34,11 +42,23 @@ export class SecurityService {
   }
 
   async getPublicKey(usage: PublicKeyUsage): Promise<string> {
+    return (await this.loadPublicKeyInfo(usage)).pem;
+  }
+
+  async getPublicKeyInfo(usage: PublicKeyUsage): Promise<PublicKeyInfo> {
+    // Preserve legacy subclasses that pin a PEM by overriding only getPublicKey.
+    if (this.getPublicKey !== SecurityService.prototype.getPublicKey) {
+      return { pem: await this.getPublicKey(usage) };
+    }
+    return await this.loadPublicKeyInfo(usage);
+  }
+
+  private async loadPublicKeyInfo(usage: PublicKeyUsage): Promise<PublicKeyInfo> {
     const cached = this.cache.find(
       (entry) => entry.usage === usage && new Date(entry.validTo) > new Date()
     );
     if (cached) {
-      return cached.pem;
+      return { pem: cached.pem, ...(cached.publicKeyId ? { publicKeyId: cached.publicKeyId } : {}) };
     }
 
     const response = await this.httpClient.request<PublicKeyCertificate[]>({
@@ -56,9 +76,10 @@ export class SecurityService {
     this.cache.push({
       usage,
       pem,
-      validTo: matching.validTo
+      validTo: matching.validTo,
+      ...(matching.publicKeyId ? { publicKeyId: matching.publicKeyId } : {})
     });
-    return pem;
+    return { pem, ...(matching.publicKeyId ? { publicKeyId: matching.publicKeyId } : {}) };
   }
 }
 

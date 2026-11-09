@@ -3,6 +3,7 @@ import { HttpClient as DefaultHttpClient } from '@/utils/http.js';
 import type { ApiV2Environment, ContextIdentifier, FormCode } from './types/common.js';
 import type { CertificateCredentials, TokenCredentials } from '@/types/auth.js';
 import { DefaultAuthManager, type AuthManager } from './auth-manager.js';
+import type { TokenAuthenticationOptions, CertificateAuthenticationOptions } from './services/authentication.js';
 import { AuthenticationV2Service } from './services/authentication.js';
 import {
   SessionV2Service,
@@ -147,22 +148,27 @@ export class KsefApiV2Client {
 
   async authenticateWithToken(
     credentials: TokenCredentials,
-    contextIdentifier: ContextIdentifier
+    contextIdentifier: ContextIdentifier,
+    options?: TokenAuthenticationOptions
   ) {
     const init = await this.authentication.initiateTokenAuthentication(
       contextIdentifier,
-      credentials.token
+      credentials.token,
+      options
     );
     return init;
   }
 
   async authenticateWithCertificate(
     credentials: CertificateCredentials,
-    contextIdentifier: ContextIdentifier
+    contextIdentifier: ContextIdentifier,
+    options?: CertificateAuthenticationOptions
   ) {
     return await this.authentication.initiateXadesAuthenticationWithCertificate(
       credentials,
-      contextIdentifier
+      contextIdentifier,
+      undefined,
+      options
     );
   }
 

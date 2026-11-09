@@ -65,6 +65,8 @@ export enum OfflineReason {
  * Used to track system unavailability periods and extend deadlines
  */
 export interface MaintenanceWindow {
+  /** Explicit MF announcement type; otherwise inferred from planned (offline vs awaryjny). */
+  mode?: Exclude<OfflineMode, 'offline24'>;
   /** Maintenance window ID (from external storage/API) */
   id: string;
   
@@ -138,8 +140,8 @@ export interface OfflineInvoiceMetadata {
   /** Generation timestamp */
   generatedAt: string;
   
-  /** Deadline for submission (ISO 8601) */
-  submitBy: string;
+  /** Deadline for submission (ISO 8601), or null when no submission is required. */
+  submitBy: string | null;
   
   /** 
    * Maintenance window reference (if generated during system unavailability)
@@ -331,7 +333,7 @@ export class InMemoryOfflineInvoiceStorage implements OfflineInvoiceStorage {
       }
       if (filter.expiringBefore) {
         const expiryDate = new Date(filter.expiringBefore);
-        results = results.filter(inv => new Date(inv.submitBy) <= expiryDate);
+        results = results.filter(inv => inv.submitBy !== null && new Date(inv.submitBy) <= expiryDate);
       }
     }
 
@@ -364,73 +366,7 @@ export class InMemoryOfflineInvoiceStorage implements OfflineInvoiceStorage {
   }
 }
 
-/**
- * Calculate submission deadline for offline invoice
- * 
- * @param mode Offline mode
- * @param generatedAt Invoice generation time (default: now)
- * @param maintenanceWindow Optional maintenance window for deadline extension
- * @returns Calculated deadline
- */
-export function calculateOfflineDeadline(
-  mode: OfflineMode, 
-  generatedAt: Date = new Date(),
-  maintenanceWindow?: MaintenanceWindow
-): Date {
-  const deadline = new Date(generatedAt);
-  
-  switch (mode) {
-    case 'offline24':
-      // Must be submitted within 24 hours from generation
-      deadline.setHours(deadline.getHours() + 24);
-      break;
-      
-    case 'offline':
-    case 'awaryjny':
-    case 'awaria_calkowita':
-      // For system unavailability modes, deadline calculation is pending official guidance
-      // Currently: assume 24h after maintenance window ends (if known), otherwise 7 days
-      if (maintenanceWindow?.endTime) {
-        const maintenanceEnd = new Date(maintenanceWindow.endTime);
-        deadline.setTime(maintenanceEnd.getTime());
-        deadline.setHours(deadline.getHours() + 24); // 24h after system is back
-      } else {
-        // Conservative fallback: 7 days from generation
-        deadline.setDate(deadline.getDate() + 7);
-      }
-      break;
-      
-    default:
-      throw new Error(`Unknown offline mode: ${mode}`);
-  }
-  
-  return deadline;
-}
-
-/**
- * Extend deadline based on maintenance window
- * Used when maintenance window is updated or extended
- * 
- * @param currentDeadline Current deadline
- * @param maintenanceWindow Updated maintenance window
- * @returns New extended deadline
- */
-export function extendDeadlineForMaintenance(
-  currentDeadline: Date,
-  maintenanceWindow: MaintenanceWindow
-): Date {
-  if (!maintenanceWindow.endTime) {
-    // If maintenance end time is unknown, keep current deadline
-    return currentDeadline;
-  }
-  
-  const maintenanceEnd = new Date(maintenanceWindow.endTime);
-  const extendedDeadline = new Date(maintenanceEnd);
-  extendedDeadline.setHours(extendedDeadline.getHours() + 24); // 24h after maintenance ends
-  
-  // Only extend if new deadline is later than current
-  return extendedDeadline > currentDeadline ? extendedDeadline : currentDeadline;
-}
+export { calculateOfflineDeadline, extendDeadlineForMaintenance } from './deadlines.js';
 
 /**
  * External maintenance window API interface
@@ -486,7 +422,8 @@ export interface MaintenanceWindowAPI {
 /**
  * Check if offline invoice is expired
  */
-export function isOfflineInvoiceExpired(submitBy: string | Date): boolean {
+export function isOfflineInvoiceExpired(submitBy: string | Date | null): boolean {
+  if (submitBy === null) return false;
   const deadline = typeof submitBy === 'string' ? new Date(submitBy) : submitBy;
   return deadline < new Date();
 }
@@ -494,7 +431,8 @@ export function isOfflineInvoiceExpired(submitBy: string | Date): boolean {
 /**
  * Get time remaining until deadline (in milliseconds)
  */
-export function getTimeUntilDeadline(submitBy: string | Date): number {
+export function getTimeUntilDeadline(submitBy: string | Date | null): number {
+  if (submitBy === null) return Infinity;
   const deadline = typeof submitBy === 'string' ? new Date(submitBy) : submitBy;
   return Math.max(0, deadline.getTime() - Date.now());
 }

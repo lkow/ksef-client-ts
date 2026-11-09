@@ -2,6 +2,7 @@ import { constants, publicEncrypt, randomBytes } from 'node:crypto';
 import type { PublicKeyUsage, SecurityService } from '../security.js';
 
 export interface SymmetricKeyMaterial {
+  publicKeyId?: string;
   /** raw 32-byte key kept locally for encrypting payloads */
   symmetricKey: Buffer;
   /** raw 16-byte IV */
@@ -21,11 +22,13 @@ export class SymmetricKeyManager {
   async createMaterial(): Promise<SymmetricKeyMaterial> {
     const symmetricKey = randomBytes(32);
     const initializationVector = randomBytes(16);
-    const publicKey = await this.securityService.getPublicKey(this.keyUsage);
+    const publicKey = typeof this.securityService.getPublicKeyInfo === 'function'
+      ? await this.securityService.getPublicKeyInfo(this.keyUsage)
+      : { pem: await this.securityService.getPublicKey(this.keyUsage) };
 
     const encryptedSymmetricKey = publicEncrypt(
       {
-        key: publicKey,
+        key: publicKey.pem,
         padding: constants.RSA_PKCS1_OAEP_PADDING,
         oaepHash: 'sha256'
       },
@@ -33,6 +36,7 @@ export class SymmetricKeyManager {
     ).toString('base64');
 
     return {
+      ...(publicKey.publicKeyId ? { publicKeyId: publicKey.publicKeyId } : {}),
       symmetricKey,
       initializationVector,
       encryptedSymmetricKey,

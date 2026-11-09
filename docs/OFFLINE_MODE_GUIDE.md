@@ -6,7 +6,7 @@ This guide summarizes how to implement offline24 workflows and technical correct
 
 | Scenario | Recommendation |
 | --- | --- |
-| Temporary connectivity loss (POS/mobile) | Use offline24, generate KOD I/II, store XML locally, send within 24h. |
+| Temporary connectivity loss (POS/mobile) | Use offline24, generate KOD I/II, store XML locally, send by the end of the next Polish business day. |
 | Planned maintenance / bulk generation | Generate invoices offline and submit in batches during the nightly window (20:00–06:00) to leverage higher limits. |
 | Technical correction required | Use the dedicated correction flow (RC5.6) to resend corrected payloads while referencing the original document. |
 
@@ -18,7 +18,7 @@ Offline invoices must be encrypted and registered later via the same `/sessions/
 2. **Generate QR codes** using the data described in `kody-qr.md`. Use the QR code service at `src/api2/qr/service.ts` which implements KOD I and KOD II generation per the spec.
 3. **Encrypt invoice payload** at creation time so that no plaintext invoice leaves the secure storage. Store the AES key (encrypted via `/security/public-key-certificates`).
 4. **Queue submission jobs** (e.g., DynamoDB status table + SQS). When connectivity is restored, open a session and push the cached payloads.
-5. **Track deadlines** – every offline invoice must be registered within 24 hours; add watchdogs that alert when `deadlineAt - now < buffer`.
+5. **Track deadlines** – offline24 invoices must be registered by the end of the next Polish business day; add watchdogs that alert when `deadlineAt - now < buffer`.
 
 ## 3. Creating an offline invoice payload
 
@@ -78,7 +78,7 @@ The helper fills `hashOfCorrectedInvoice` so KSeF can link the documents per RC5
 
 | Control | Description |
 | --- | --- |
-| `deadlineAt` tracking | Store `deadlineAt = issuedAt + 24h` and process FIFO per context to avoid missing SLAs. |
+| `deadlineAt` tracking | Store the deadline returned by `calculateOfflineDeadline` (including its nullable result) and process FIFO per context to avoid missing SLAs. |
 | Watchdogs | Run a scheduled job every 5 minutes to find drafts where `deadlineAt - now < 60 min` and raise alerts. |
 | Offline certificate | RC4 introduced dedicated offline certificates. Track two credentials per tenant (interactive + offline) to avoid mixing scopes. |
 | UPO polling | After submission, poll `/sessions/{ref}/invoices` until `status.code === 200` and persist `upoDownloadUrl` for audit. |
@@ -91,3 +91,28 @@ The helper fills `hashOfCorrectedInvoice` so KSeF can link the documents per RC5
 - `docs/OFFLINE_MODES_ARCHITECTURE.md` – system-level patterns and storage suggestions
 
 Roadmap: add a dedicated Offline Draft manager (persist AES keys + QR metadata) and official QR/PDF helpers once MF finalises the RC6 materials.
+
+## Deadline helper contract
+
+`calculateOfflineDeadline(mode, issueDate, maintenanceWindow?)` uses the invoice issue date
+(`P_1`) in `Europe/Warsaw`, not a rolling 24-hour interval. It skips weekends and Polish statutory
+holidays, including Easter Monday, Corpus Christi and Christmas Eve from 2025. For `offline`,
+it returns the end of the next business day after unavailability ends; for `awaryjny`, the end
+of the seventh business day after the outage ends. An unknown outage end throws instead of
+inventing a deadline. The caller must supply the actual MF announcement data.
+
+`MaintenanceWindow.mode` can explicitly distinguish `offline`, `awaryjny` and
+`awaria_calkowita`. Without it, `planned: true` means scheduled unavailability and `false`
+means an outage when extending a deadline. For direct `calculateOfflineDeadline` calls, the
+explicit `mode` (or `maintenanceWindow.mode`) selects the rule. Always pass the actual issue
+date for an outage calculation, rather than relying on the default current date. An outage announcement can extend an existing deadline only if it overlaps the submission
+period. `calculateOfflineDeadline` checks the issue date; when calling
+`extendDeadlineForMaintenance` directly, pass that date as its third argument to exclude stale
+outages. Scheduled maintenance does not extend offline24 deadlines. Total failure returns `null`, meaning there is no KSeF submission obligation;
+`OfflineInvoiceMetadata.submitBy` is nullable, `isOfflineInvoiceExpired(null)` is false and
+`getTimeUntilDeadline(null)` is Infinity. This changes the deadline helpers' return type from
+`Date` to `Date | null`; callers must handle the no-submission case explicitly.
+
+See [MF offline rules](https://github.com/CIRFMF/ksef-docs/blob/main/tryby-offline.md) and the
+[statutory holiday list](https://isap.sejm.gov.pl/isap.nsf/download.xsp/WDU20250000296/O/D20250296.pdf).
+This calendar does not add employer-specific substitute days off.

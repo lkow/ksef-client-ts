@@ -13,7 +13,7 @@
  * - For REAL submission: Set KSEF_TOKEN, KSEF_NIP in .env.examples
  * 
  * Offline Modes:
- * - offline24: Planned offline (24h deadline)
+ * - offline24: By the end of the next Polish business day
  * - offline: System unavailability (extended deadline)
  * - awaryjny: Emergency mode
  * - awaria_calkowita: Total system failure
@@ -101,7 +101,7 @@ async function main() {
   const deadline = calculateOfflineDeadline(offlineMode, generatedAt);
   console.log(`   Mode: ${offlineMode}`);
   console.log(`   Reason: ${getDefaultOfflineReason(offlineMode)}`);
-  console.log(`   Submit by: ${deadline.toISOString()}`);
+  console.log(`   Submit by: ${deadline?.toISOString() ?? 'No submission required'}`);
   
   const timeRemaining = getTimeUntilDeadline(deadline);
   const hoursRemaining = Math.floor(timeRemaining / (1000 * 60 * 60));
@@ -160,7 +160,7 @@ async function main() {
       } : undefined
     },
     generatedAt: generatedAt.toISOString(),
-    submitBy: deadline.toISOString(),
+    submitBy: deadline?.toISOString() ?? null,
     status: OfflineInvoiceStatus.GENERATED
   };
 
@@ -223,7 +223,7 @@ async function main() {
   console.log('      - Update stored invoice with KSeF reference');
   console.log('');
   console.log('   📅 Deadlines by Mode:');
-  console.log('      - offline24: 24 hours from generation');
+  console.log('      - offline24: next Polish business day');
   console.log('      - offline: Extended based on maintenance window');
   console.log('      - awaryjny: Emergency, extended deadlines');
   console.log('      - awaria_calkowita: Total failure, longest extension');

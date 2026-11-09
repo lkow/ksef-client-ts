@@ -93,9 +93,10 @@ describe('AuthenticationV2Service', () => {
       expect(body.encryptedToken).toBeDefined();
     });
 
-    it('includes ipAddressPolicy when specified', async () => {
+    it('maps the legacy STRICT policy to the challenge IP', async () => {
       mockHttpClient.mockResponseOnce({
         challenge: 'test-challenge',
+        clientIp: '192.0.2.1',
         timestampMs: 1704067200000
       });
       mockHttpClient.mockResponseOnce({
@@ -117,7 +118,8 @@ describe('AuthenticationV2Service', () => {
 
       const tokenRequest = mockHttpClient.getRequests()[1];
       const body = JSON.parse(tokenRequest.body!);
-      expect(body.ipAddressPolicy).toBe('STRICT');
+      expect(body.authorizationPolicy).toEqual({ allowedIps: { ip4Addresses: ['192.0.2.1'] } });
+      expect(body).not.toHaveProperty('ipAddressPolicy');
     });
   });
 

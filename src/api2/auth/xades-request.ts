@@ -3,7 +3,8 @@ import { DOMParser } from '@xmldom/xmldom';
 import { ExclusiveCanonicalization } from 'xml-crypto';
 import type { CertificateCredentials } from '@/types/auth.js';
 import { parseCertificate, type ParsedCertificate } from '@/utils/crypto.js';
-import type { ContextIdentifier } from '../types/common.js';
+import { authorizationPolicyXml } from './authorization-policy.js';
+import type { AuthorizationPolicy, ContextIdentifier } from '../types/common.js';
 
 export type SubjectIdentifierTypeV2 = 'certificateSubject' | 'certificateFingerprint';
 
@@ -11,6 +12,7 @@ export interface BuildAuthTokenRequestParams {
   challenge: string;
   contextIdentifier: ContextIdentifier;
   subjectIdentifierType: SubjectIdentifierTypeV2;
+  authorizationPolicy?: AuthorizationPolicy;
 }
 
 const AUTH_NAMESPACE = 'http://ksef.mf.gov.pl/auth/token/2.0';
@@ -89,9 +91,10 @@ export function buildUnsignedAuthTokenRequest(
   includeXmlDeclaration = true
 ): string {
   const contextXml = buildContextIdentifier(params.contextIdentifier);
+  const policyXml = params.authorizationPolicy !== undefined ? authorizationPolicyXml(params.authorizationPolicy) : '';
   const dsNamespace = includeDsNamespace ? ` xmlns:ds="${DS_NS}"` : '';
   const schemaNamespaces = ` xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"`;
-  const xml = `<AuthTokenRequest xmlns="${AUTH_NAMESPACE}"${schemaNamespaces}${dsNamespace}><Challenge>${params.challenge}</Challenge><ContextIdentifier>${contextXml}</ContextIdentifier><SubjectIdentifierType>${params.subjectIdentifierType}</SubjectIdentifierType></AuthTokenRequest>`;
+  const xml = `<AuthTokenRequest xmlns="${AUTH_NAMESPACE}"${schemaNamespaces}${dsNamespace}><Challenge>${params.challenge}</Challenge><ContextIdentifier>${contextXml}</ContextIdentifier><SubjectIdentifierType>${params.subjectIdentifierType}</SubjectIdentifierType>${policyXml}</AuthTokenRequest>`;
   return includeXmlDeclaration ? `<?xml version="1.0" encoding="utf-8"?>${xml}` : xml;
 }
 

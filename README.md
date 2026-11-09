@@ -66,6 +66,19 @@ const authInit = await client.authentication.initiateXadesAuthenticationWithCert
 
 The helper builds and signs the XML payload specified in [`uwierzytelnianie.md`](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md#21-uwierzytelnianie-kwalifikowanym-podpisem-elektronicznym).
 
+Both `authenticateWithToken` and `authenticateWithCertificate` accept an options argument with
+`authorizationPolicy: { allowedIps: { ip4Addresses, ip4Ranges, ip4Masks } }`.
+Each list accepts up to ten IPv4 entries. An explicit policy must contain at least one valid rule;
+omit the option for unrestricted access. Empty or null restrictions are rejected on both auth paths. The certificate helper includes the policy in the signed
+XML. For an externally signed XML request, include the policy before signing; the raw
+`initiateXadesAuthentication` method does not alter the signed document.
+
+The legacy token option `ipAddressPolicy: 'STRICT'` is deprecated and now binds to the IPv4
+`clientIp` returned by the challenge. It throws when that IP is unavailable or IPv6, rather than
+silently skipping the restriction. `NONE` adds no restriction; do not combine the legacy option
+with an explicit `authorizationPolicy`. MF public key IDs are retained alongside the encryption
+key and sent automatically when the selected environment publishes them.
+
 ## Local XAdES diagnostics
 
 The four analytical tools in [`scripts/`](scripts/README.md) help inspect signatures and XML canonicalization. `pnpm xades:auth` sends authentication requests to KSeF; the other tools run locally. See the guide for prerequisites, environment variables, examples, and sensitive-output precautions. These tools are not a complete XAdES validator.
@@ -123,6 +136,10 @@ const results = await client.batch.getMappedResults(
 );
 ```
 
+For offline batch invoices, pass `session: { offlineMode: true }` to `batch.submit` or
+`createBatchSession`. The low-level `sessions.openBatchSession` accepts `offlineMode` directly
+in its options. Explicit `false` is preserved; omission keeps the API default.
+
 The existing `createBatchSession(accessToken, formCode, buffer, ...)` helper remains available as a low-level/advanced API for callers that already own archive construction and part metadata.
 
 ## Collective payment identifiers
@@ -157,6 +174,11 @@ Use `query(accessToken, { dateCreatedFrom, dateCreatedTo, ...filters }, options)
 - `payment` and `description` may be absent or null. `detailsHidden: true` means access restrictions hid those values; it does not mean the payment amount is zero.
 - One of `InvoiceRead`, `InvoiceWrite`, or `CollectiveIdentifierManage` is required. Person grants and KSeF token permission types support `CollectiveIdentifierManage`.
 - `generate` disables transport retries and refresh-on-401 for that request, even when retries are enabled on the shared HTTP client. Supply a valid access token. If a response is lost, creation may have succeeded: reconcile the uncertain result before explicitly trying again. The contract does not promise idempotent creation. Read operations retain the HTTP client's retry policy.
+
+Use `validateCollectiveIdentifier(value)` for a local format and CRC-8 check (35 characters,
+CRC-8 polynomial `0x07`, initial value `0x00`). It accepts the official dummy seller identifiers,
+so it does not establish tax registration. A valid checksum proves neither existence in KSeF
+nor payment settlement. Use the paginated `queryInvoices` API to check invoice membership.
 
 ## Permissions, tokens & sessions
 

@@ -72,10 +72,29 @@ export interface AuthenticationTokensResponse {
   refreshToken: AuthenticationTokens;
 }
 
+/** Optional request restrictions enforced by KSeF for every access-token use. */
+export interface AllowedIps {
+  ip4Addresses?: string[] | null;
+  ip4Ranges?: string[] | null;
+  ip4Masks?: string[] | null;
+}
+
+export interface AuthorizationPolicy {
+  allowedIps?: AllowedIps | null;
+}
+
+export interface AuthenticationMethodInfo {
+  category: 'XadesSignature' | 'NationalNode' | 'Token' | 'Other';
+  code: string;
+  displayName: string;
+}
+
 export interface AuthenticationChallengeResponse {
   challenge: string;
   timestamp: string;
   timestampMs: number;
+  /** Absent on older environments. */
+  clientIp?: string;
 }
 
 export interface AuthenticationInitResponse {
@@ -86,6 +105,10 @@ export interface AuthenticationInitResponse {
 export interface AuthenticationOperationStatusResponse {
   startDate: string;
   authenticationMethod: 'Token' | 'QualifiedSeal' | 'QualifiedSignature' | string;
+  authenticationMethodInfo?: AuthenticationMethodInfo;
+  isTokenRedeemed?: boolean | null;
+  lastTokenRefreshDate?: string | null;
+  refreshTokenValidUntil?: string | null;
   status: ApiV2ResponseStatus;
 }
 
@@ -116,6 +139,7 @@ export type UpoVersion = 'upo-v4-2' | 'upo-v4-3';
 export type CompressionType = 'Zip' | 'TarGz';
 
 export interface EncryptionInfo {
+  publicKeyId?: string | null;
   encryptedSymmetricKey: string;
   initializationVector: string;
 }

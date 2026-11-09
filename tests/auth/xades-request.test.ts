@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as forge from 'node-forge';
+import { DOMParser } from '@xmldom/xmldom';
+import { SignedXml } from 'xml-crypto';
 import { buildSignedAuthTokenRequest } from '../../src/api2/auth/xades-request.js';
 import type { CertificateCredentials } from '../../src/types/auth.js';
 
@@ -231,4 +233,26 @@ describe('buildSignedAuthTokenRequest', () => {
 
     expect(sig1).not.toBe(sig2);
   });
+  it('cryptographically binds the IP policy into the signed request', () => {
+    const result = buildSignedAuthTokenRequest({
+      challenge: 'test', contextIdentifier: { type: 'Nip', value: '1234567890' },
+      subjectIdentifierType: 'certificateSubject',
+      authorizationPolicy: { allowedIps: { ip4Addresses: ['192.0.2.1'], ip4Masks: ['198.51.100.0/24'] } }
+    }, credentials);
+    const verify = (xml: string) => {
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      const signature = doc.getElementsByTagNameNS('http://www.w3.org/2000/09/xmldsig#', 'Signature')[0]!;
+      const cert = doc.getElementsByTagNameNS('http://www.w3.org/2000/09/xmldsig#', 'X509Certificate')[0]!.textContent;
+      const verifier = new SignedXml({ publicCert: `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----` });
+      // The existing MF auth builder uses this legacy URI for RSA-SHA256.
+      // Verify its cryptography without changing the wire algorithm identifier in this patch.
+      verifier.SignatureAlgorithms['http://www.w3.org/2000/09/xmldsig#rsa-sha256'] =
+        verifier.SignatureAlgorithms['http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'];
+      verifier.loadSignature(signature);
+      return verifier.checkSignature(xml);
+    };
+    expect(verify(result)).toBe(true);
+    expect(verify(result.replace('192.0.2.1', '192.0.2.2'))).toBe(false);
+  });
+
 });
