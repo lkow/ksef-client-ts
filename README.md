@@ -237,6 +237,22 @@ Each method throws if invoked against production to make the TE-only contract ex
 | `docs/TOKEN_LIFECYCLE_GUIDE.md` | Token APIs end-to-end |
 | `docs/INTEGRATION_TESTING.md` | Integration testing setup and troubleshooting |
 
+## Development toolchain
+
+Use pnpm 11.7.0 with Node 20.19+ on the Node 20 line, Node 22.12+ on the Node 22 line,
+or Node 24+. CI verifies Node 22 and 24. The SDK runtime requirement remains Node 20+; the newer requirement
+is for the build/test tools, not applications consuming the published library.
+
+Vitest, its UI and V8 coverage provider are upgraded together. Vite is an explicit development
+dependency so the test runner cannot retain an incompatible older peer from the lockfile.
+`pnpm-workspace.yaml` has a scoped minimatch override for typescript-estree 6.21.0 because
+GHSA-g3hv-75wg-m249 is fixed only in minimatch 11.0.1+. Remove that override when the parser's
+own dependency range includes the fix. tsup stays at 8.5.0 to preserve its declaration output,
+with esbuild upgraded through a second scoped override for GHSA-g7r4-m6w7-qqqr. ESLint configuration and application lint rules are unchanged.
+
+Run `pnpm audit --audit-level low` to check the complete dependency graph. CI runs the same
+check and rejects known vulnerabilities, including development dependencies.
+
 ## Running the demo & tests
 
 1. `cp .env.demo.example .env.demo` and fill in `KSEF_V2_TOKEN`, `KSEF_V2_ENV`, `KSEF_V2_NIP`, `KSEF_V2_INVOICE`.
