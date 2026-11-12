@@ -15,7 +15,7 @@ describe('SymmetricKeyManager', () => {
   const { publicKey, privateKey } = generateTestKeyPair();
 
   const mockSecurityService = {
-    getPublicKey: vi.fn().mockResolvedValue(publicKey)
+    getPublicKeyInfo: vi.fn().mockResolvedValue({ pem: publicKey, publicKeyId: 'test-key-id' })
   };
 
   beforeEach(() => {
@@ -44,7 +44,7 @@ describe('SymmetricKeyManager', () => {
       const material = await manager.createMaterial();
 
       // Verify getPublicKey was called with correct usage
-      expect(mockSecurityService.getPublicKey).toHaveBeenCalledWith('SymmetricKeyEncryption');
+      expect(mockSecurityService.getPublicKeyInfo).toHaveBeenCalledWith('SymmetricKeyEncryption');
 
       // Decrypt the encrypted symmetric key and verify it matches
       const encryptedBuffer = Buffer.from(material.encryptedSymmetricKey, 'base64');
@@ -91,7 +91,7 @@ describe('SymmetricKeyManager', () => {
       const manager = new SymmetricKeyManager(mockSecurityService as any, 'KsefTokenEncryption');
       await manager.createMaterial();
 
-      expect(mockSecurityService.getPublicKey).toHaveBeenCalledWith('KsefTokenEncryption');
+      expect(mockSecurityService.getPublicKeyInfo).toHaveBeenCalledWith('KsefTokenEncryption');
     });
   });
 });

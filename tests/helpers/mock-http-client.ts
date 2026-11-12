@@ -86,7 +86,8 @@ const testKeyPair = generateKeyPairSync('rsa', {
  */
 export function createMockSecurityService() {
   return {
-    getPublicKey: vi.fn().mockResolvedValue(testKeyPair.publicKey)
+    getPublicKey: vi.fn().mockResolvedValue(testKeyPair.publicKey),
+    getPublicKeyInfo: vi.fn().mockResolvedValue({ pem: testKeyPair.publicKey, publicKeyId: 'test-key-id' })
   };
 }
 

@@ -1,2 +1,8 @@
 allowBuilds:
   esbuild: true
+# GHSA-g3hv-75wg-m249 has no fix in the parser's minimatch 9 range.
+# Keep this scoped to the existing parser; remove when its upstream range includes 11.0.1+.
+overrides:
+  '@typescript-eslint/typescript-estree@6.21.0>minimatch': ^11.0.2
+  # GHSA-g7r4-m6w7-qqqr: retain the existing bundler and patch its esbuild dependency.
+  'tsup@8.5.0>esbuild': ^0.28.2

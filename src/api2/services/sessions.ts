@@ -41,6 +41,7 @@ export interface OpenOnlineSessionResult extends OpenOnlineSessionResponse {
 }
 
 export interface OpenBatchSessionOptions {
+  offlineMode?: boolean;
   encryptionMaterial?: SymmetricKeyMaterial;
   /**
    * Select UPO version for the session (header: X-KSeF-Feature).
@@ -83,7 +84,8 @@ export class SessionV2Service {
       formCode,
       encryption: {
         encryptedSymmetricKey: encryptionMaterial.encryptedSymmetricKey,
-        initializationVector: encryptionMaterial.initializationVectorBase64
+        initializationVector: encryptionMaterial.initializationVectorBase64,
+        ...(encryptionMaterial.publicKeyId ? { publicKeyId: encryptionMaterial.publicKeyId } : {})
       }
     };
 
@@ -127,9 +129,11 @@ export class SessionV2Service {
     const requestBody: OpenBatchSessionRequest = {
       formCode,
       batchFile,
+      ...(options.offlineMode !== undefined ? { offlineMode: options.offlineMode } : {}),
       encryption: {
         encryptedSymmetricKey: encryptionMaterial.encryptedSymmetricKey,
-        initializationVector: encryptionMaterial.initializationVectorBase64
+        initializationVector: encryptionMaterial.initializationVectorBase64,
+        ...(encryptionMaterial.publicKeyId ? { publicKeyId: encryptionMaterial.publicKeyId } : {})
       }
     };
 

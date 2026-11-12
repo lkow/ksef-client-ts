@@ -1,9 +1,10 @@
-import type { ApiV2ResponseStatus } from './common.js';
+import type { ApiV2ResponseStatus, AuthenticationMethodInfo } from './common.js';
 
 export interface AuthenticationListItem {
   referenceNumber: string;
   startDate: string;
   authenticationMethod: string;
+  authenticationMethodInfo?: AuthenticationMethodInfo;
   status: ApiV2ResponseStatus;
   isTokenRedeemed?: boolean | null;
   lastTokenRefreshDate?: string | null;

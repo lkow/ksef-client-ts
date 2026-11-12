@@ -424,3 +424,23 @@ export function formatPESEL(pesel: string): string {
   
   return cleanPesel;
 } 
+
+/**
+ * Validate the IZ format and CRC-8 (poly 0x07, init 0x00) over the prefix before the final hyphen.
+ * A valid checksum does not establish existence in KSeF, invoice membership, or payment settlement.
+ * The seller's 10-digit field is checked as a format, including official TE dummy identifiers.
+ */
+export function validateCollectiveIdentifier(identifier: string): boolean {
+  if (typeof identifier !== 'string' || identifier.length !== 35
+    || !/^\d{10}-IZ(?!0000)\d{4}(?:0[1-9]|1[0-2])-[0-9A-F]{12}-[0-9A-F]{2}$/.test(identifier)) {
+    return false;
+  }
+  let crc = 0;
+  for (const byte of Buffer.from(identifier.slice(0, -3), 'ascii')) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      crc = ((crc << 1) ^ (crc & 0x80 ? 0x07 : 0)) & 0xff;
+    }
+  }
+  return crc === Number.parseInt(identifier.slice(-2), 16);
+}
