@@ -119,6 +119,9 @@ jobs:
       - name: Build package output
         run: pnpm run build
 
+      - name: Packed SDK consumer
+        run: pnpm run check:package
+
       - name: Build and pack tarball
         run: pnpm run release:pack
 
