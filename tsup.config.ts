@@ -4,7 +4,7 @@ import { tsconfigPathsPlugin } from 'esbuild-plugin-tsconfig-paths';
 export default defineConfig({
   entry: ['src/index.ts', 'src/utils/crypto.ts', 'src/utils/validation.ts'],
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: false,
   sourcemap: true,
   clean: true,
   splitting: false,
