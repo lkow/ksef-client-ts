@@ -35,7 +35,10 @@ describe('RateLimitsService', () => {
     expect(request?.headers?.['Authorization']).toBe('Bearer token');
   });
 
-  it('calls GET /limits/context', async () => {
+  it.each([
+    { environment: 'demo', tokens: undefined },
+    { environment: 'test', tokens: { maxTokens: 100 } }
+  ] as const)('reads context limits on $environment', async ({ environment, tokens }) => {
     mockHttpClient.mockResponse({
       onlineSession: {
         maxInvoiceSizeInMB: 50,
@@ -49,13 +52,15 @@ describe('RateLimitsService', () => {
       },
       collectiveIdentifier: {
         maxInvoices: 500
-      }
+      },
+      ...(tokens ? { tokens } : {})
     });
 
-    const service = new RateLimitsService(mockHttpClient as any, 'test');
+    const service = new RateLimitsService(mockHttpClient as any, environment);
 
     const result = await service.getContextLimits('token');
     expect(result.collectiveIdentifier?.maxInvoices).toBe(500);
+    expect(result.tokens).toEqual(tokens);
 
     const request = mockHttpClient.getLastRequest();
     expect(request?.method).toBe('GET');

@@ -89,6 +89,18 @@ export interface AuthenticationMethodInfo {
   displayName: string;
 }
 
+export interface DictionaryValueRev2<Code extends string> {
+  code: Code;
+  rawCode: string;
+  displayName: string;
+}
+
+export interface AuthenticationMethodInfoRev2 {
+  category: DictionaryValueRev2<'XadesSignature' | 'NationalNode' | 'Token' | 'FutureValue'>;
+  code: string;
+  displayName: string;
+}
+
 export interface AuthenticationChallengeResponse {
   challenge: string;
   timestamp: string;
@@ -110,6 +122,14 @@ export interface AuthenticationOperationStatusResponse {
   lastTokenRefreshDate?: string | null;
   refreshTokenValidUntil?: string | null;
   status: ApiV2ResponseStatus;
+}
+
+export interface AuthenticationOperationStatusResponseRev2
+  extends Omit<AuthenticationOperationStatusResponse, 'authenticationMethod' | 'authenticationMethodInfo' | 'status'> {
+  authenticationMethodInfo: AuthenticationMethodInfoRev2;
+  status: Pick<ApiV2ResponseStatus, 'code' | 'description'> & {
+    details?: string[] | null;
+  };
 }
 
 export interface AuthenticationTokenRedeemResponse {

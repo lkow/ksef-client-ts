@@ -9,6 +9,35 @@ describe('AuthSessionService', () => {
     mockHttpClient.reset();
   });
 
+  it('lists rev2 sessions with pagination and structured authentication data', async () => {
+    const page = {
+      continuationToken: 'next-page',
+      items: [{
+        referenceNumber: 'session-ref',
+        startDate: '2026-11-24T08:00:00Z',
+        authenticationMethodInfo: {
+          category: { code: 'FutureValue', rawCode: 'Other', displayName: 'Other' },
+          code: 'NewMethod',
+          displayName: 'New authentication method'
+        },
+        status: { code: 200, description: 'Success' }
+      }]
+    };
+    mockHttpClient.mockResponse(page);
+    const service = new AuthSessionService(mockHttpClient as any, 'test');
+
+    await expect(service.listSessionsRev2('access-token', {
+      pageSize: 25,
+      continuationToken: 'first-page'
+    })).resolves.toEqual(page);
+    expect(mockHttpClient.getLastRequest()).toEqual({
+      method: 'GET',
+      url: 'https://api-test.ksef.mf.gov.pl/v2/auth/sessions/rev2?pageSize=25',
+      headers: { Authorization: 'Bearer access-token', 'x-continuation-token': 'first-page' },
+      skipAuthRetry: true
+    });
+  });
+
   describe('listSessions', () => {
     it('calls GET /auth/sessions', async () => {
       mockHttpClient.mockResponse({
@@ -125,7 +154,7 @@ describe('AuthSessionService', () => {
       const service = new AuthSessionService(mockHttpClient as any, 'demo');
       await service.listSessions('token');
 
-      expect(mockHttpClient.getLastRequest()?.url).toContain('api-demo.ksef.mf.gov.pl');
+      expect(mockHttpClient.getLastRequest()?.url).toBe('https://api-demo.ksef.mf.gov.pl/v2/auth/sessions');
     });
 
     it('uses prod environment URL', async () => {
@@ -134,7 +163,7 @@ describe('AuthSessionService', () => {
       const service = new AuthSessionService(mockHttpClient as any, 'prod');
       await service.listSessions('token');
 
-      expect(mockHttpClient.getLastRequest()?.url).toContain('api.ksef.mf.gov.pl');
+      expect(mockHttpClient.getLastRequest()?.url).toBe('https://api.ksef.mf.gov.pl/v2/auth/sessions');
     });
   });
 });

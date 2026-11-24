@@ -14,6 +14,15 @@ const ROUTES_PATH = path.join(REPO_ROOT, 'src/api2/routes.ts');
 const SERVICES_DIR = path.join(REPO_ROOT, 'src/api2/services');
 const EXTRA_OPERATION_FILES = [path.join(REPO_ROOT, 'src/api2/security.ts')];
 const SPEC_EXCLUDED_PREFIXES = ['/testdata/'];
+// SDK opt-in operations from the TE 2.10.0 contract during the rollout to TR.
+const TE_REV2_OPERATIONS = [
+  'GET /auth/rev2/{}',
+  'GET /auth/sessions/rev2',
+  'GET /tokens/rev2',
+  'GET /tokens/rev2/{}',
+  'POST /tokens/rev2',
+  'POST /tokens/{}/approve'
+];
 
 function canonicalize(value) {
   if (Array.isArray(value)) {
@@ -550,14 +559,15 @@ async function main() {
   }
 
   const specOperations = parseSpecOperations(localSpecJson);
-  const implementationNotInSpec = difference(implementationOperations, specOperations)
+  const expectedOperations = new Set([...specOperations, ...TE_REV2_OPERATIONS]);
+  const implementationNotInSpec = difference(implementationOperations, expectedOperations)
     .filter((operation) => !isSpecExcludedOperation(operation));
-  const specNotInImplementation = difference(specOperations, implementationOperations);
+  const specNotInImplementation = difference(expectedOperations, implementationOperations);
 
   if (implementationNotInSpec.length > 0 || specNotInImplementation.length > 0) {
     const lines = [
       'OpenAPI operation coverage mismatch detected.',
-      `Spec operations: ${specOperations.size}`,
+      `Expected operations (snapshot and TE rev2): ${expectedOperations.size}`,
       `Implemented operations: ${implementationOperations.size}`,
       ''
     ];
@@ -584,6 +594,12 @@ async function main() {
   console.log(
     `OpenAPI guard passed: ${specOperations.size} operations in sync (source: ${upstreamSpecUrl}).`
   );
+  const additionalTeOperations = expectedOperations.size - specOperations.size;
+  if (additionalTeOperations > 0) {
+    console.log(`Coverage includes ${additionalTeOperations} additional TE rev2 operations.`);
+  } else {
+    console.warn('The primary snapshot now covers all TE rev2 operations. Remove TE_REV2_OPERATIONS from this guard.');
+  }
 }
 
 try {

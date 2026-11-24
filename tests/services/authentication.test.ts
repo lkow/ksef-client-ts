@@ -187,14 +187,18 @@ describe('AuthenticationV2Service', () => {
   });
 
   describe('getAuthenticationStatus', () => {
-    it('calls GET /auth/{referenceNumber}', async () => {
+    it.each([
+      { environment: 'test', baseUrl: 'https://api-test.ksef.mf.gov.pl/v2' },
+      { environment: 'demo', baseUrl: 'https://api-demo.ksef.mf.gov.pl/v2' },
+      { environment: 'prod', baseUrl: 'https://api.ksef.mf.gov.pl/v2' }
+    ] as const)('calls the original status endpoint on $environment', async ({ environment, baseUrl }) => {
       mockHttpClient.mockResponse({
         status: 'Active'
       });
 
       const service = new AuthenticationV2Service(
         mockHttpClient as any,
-        'test',
+        environment,
         mockSecurityService as any
       );
 
@@ -202,8 +206,30 @@ describe('AuthenticationV2Service', () => {
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.method).toBe('GET');
-      expect(request?.url).toContain('/auth/ref-123');
+      expect(request?.url).toBe(`${baseUrl}/auth/ref-123`);
       expect(request?.headers?.['Authorization']).toBe('Bearer auth-token');
+    });
+  });
+
+  it('reads the rev2 authentication status using the operation token', async () => {
+    const status = {
+      startDate: '2026-11-24T08:00:00Z',
+      authenticationMethodInfo: {
+        category: { code: 'Token', rawCode: 'Token', displayName: 'Token' },
+        code: 'Token',
+        displayName: 'Token'
+      },
+      status: { code: 450, description: 'Token poza okresem ważności', details: null }
+    };
+    mockHttpClient.mockResponse(status);
+    const service = new AuthenticationV2Service(mockHttpClient as any, 'test', mockSecurityService as any);
+
+    await expect(service.getAuthenticationStatusRev2('ref/123', 'operation-token')).resolves.toEqual(status);
+    expect(mockHttpClient.getLastRequest()).toEqual({
+      method: 'GET',
+      url: 'https://api-test.ksef.mf.gov.pl/v2/auth/rev2/ref%2F123',
+      headers: { Authorization: 'Bearer operation-token' },
+      skipAuthRetry: true
     });
   });
 

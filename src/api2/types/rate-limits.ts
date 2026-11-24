@@ -43,6 +43,12 @@ export interface EffectiveContextLimits {
   batchSession: EffectiveSessionLimits;
   /** API 2.7.1; absent on older environments. */
   collectiveIdentifier?: CollectiveIdentifierEffectiveContextLimits;
+  /** Advertised by KSeF API 2.10.0 and later. */
+  tokens?: TokensEffectiveContextLimits;
+}
+
+export interface TokensEffectiveContextLimits {
+  maxTokens: number;
 }
 
 export interface CollectiveIdentifierEffectiveContextLimits {

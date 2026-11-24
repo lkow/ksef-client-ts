@@ -164,15 +164,18 @@ describe('PermissionsV2Service', () => {
   });
 
   describe('grantEuEntityPermissions', () => {
-    it('calls POST /permissions/eu-entities/grants', async () => {
+    it.each([
+      { environment: 'demo', permission: 'InvoiceRead' },
+      { environment: 'test', permission: 'CollectiveIdentifierManage' }
+    ] as const)('sends $permission on $environment', async ({ environment, permission }) => {
       mockHttpClient.mockResponse({ referenceNumber: 'eu-ref' });
 
-      const service = new PermissionsV2Service(mockHttpClient as any, 'test');
+      const service = new PermissionsV2Service(mockHttpClient as any, environment);
 
       await service.grantEuEntityPermissions('token', {
         subjectIdentifier: { type: 'Fingerprint', value: 'fingerprint-value' },
-        permissions: ['InvoiceRead'],
-        description: 'Grant EU entity read',
+        permissions: [permission],
+        description: 'Grant EU entity permission',
         subjectDetails: {
           subjectDetailsType: 'EntityByFingerprint',
           entityByFp: {
@@ -184,6 +187,7 @@ describe('PermissionsV2Service', () => {
 
       const request = mockHttpClient.getLastRequest();
       expect(request?.url).toContain('/permissions/eu-entities/grants');
+      expect(JSON.parse(request?.body ?? '{}').permissions).toEqual([permission]);
     });
   });
 
