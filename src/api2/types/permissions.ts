@@ -33,7 +33,8 @@ export type EntityPermissionItemScope = EntityPermissionType;
 
 export type IndirectPermissionType = 'InvoiceRead' | 'InvoiceWrite' | 'CollectiveIdentifierManage';
 
-export type EuEntityPermissionType = 'InvoiceWrite' | 'InvoiceRead';
+/** `CollectiveIdentifierManage` for EU entities requires KSeF API 2.10.0. */
+export type EuEntityPermissionType = 'InvoiceWrite' | 'InvoiceRead' | 'CollectiveIdentifierManage';
 
 export interface EntityDetails {
   fullName: string;

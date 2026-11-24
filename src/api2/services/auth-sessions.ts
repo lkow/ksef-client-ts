@@ -1,10 +1,10 @@
-import type { HttpClient } from '@/utils/http.js';
+import type { HttpClient, HttpRequestOptions } from '@/utils/http.js';
 import { buildQueryString } from '@/utils/http.js';
 import {
   API_V2_BASE_URLS,
   type ApiV2Environment
 } from '../types/common.js';
-import type { AuthenticationListResponse } from '../types/auth-session.js';
+import type { AuthenticationListResponse, AuthenticationListResponseRev2 } from '../types/auth-session.js';
 import { Routes } from '../routes.js';
 
 export interface ListSessionsOptions {
@@ -27,17 +27,45 @@ export class AuthSessionService {
     options: ListSessionsOptions = {}
   ): Promise<AuthenticationListResponse> {
     const query = options.pageSize ? buildQueryString({ pageSize: options.pageSize }) : '';
+    return this.listSessionsAt<AuthenticationListResponse>(
+      `${this.baseUrl}${Routes.AuthSessions.root}${query}`,
+      token,
+      options.continuationToken
+    );
+  }
+
+  /** Lists active sessions on environments that support rev2. */
+  async listSessionsRev2(
+    token: string,
+    options: ListSessionsOptions = {}
+  ): Promise<AuthenticationListResponseRev2> {
+    const query = buildQueryString({ pageSize: options.pageSize });
+    return this.listSessionsAt<AuthenticationListResponseRev2>(
+      `${this.baseUrl}${Routes.AuthSessions.rootRev2}${query}`,
+      token,
+      options.continuationToken,
+      { skipAuthRetry: true }
+    );
+  }
+
+  private async listSessionsAt<T>(
+    url: string,
+    token: string,
+    continuationToken?: string,
+    authOptions: Pick<HttpRequestOptions, 'skipAuthRetry'> = {}
+  ): Promise<T> {
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`
     };
-    if (options.continuationToken) {
-      headers['x-continuation-token'] = options.continuationToken;
+    if (continuationToken) {
+      headers['x-continuation-token'] = continuationToken;
     }
 
-    const response = await this.httpClient.request<AuthenticationListResponse>({
+    const response = await this.httpClient.request<T>({
       method: 'GET',
-      url: `${this.baseUrl}${Routes.AuthSessions.root}${query}`,
-      headers
+      url,
+      headers,
+      ...authOptions
     });
     return response.data;
   }

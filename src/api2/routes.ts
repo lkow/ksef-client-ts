@@ -8,11 +8,13 @@ export const Routes = {
     ksefToken: '/auth/ksef-token',
     xadesSignature: '/auth/xades-signature',
     status: (referenceNumber: string) => `/auth/${referenceNumber}`,
+    statusRev2: (referenceNumber: string) => `/auth/rev2/${encodeURIComponent(referenceNumber)}`,
     tokenRedeem: '/auth/token/redeem',
     tokenRefresh: '/auth/token/refresh'
   },
   AuthSessions: {
     root: '/auth/sessions',
+    rootRev2: '/auth/sessions/rev2',
     current: '/auth/sessions/current',
     byReference: (referenceNumber: string) => `/auth/sessions/${referenceNumber}`
   },
@@ -70,7 +72,10 @@ export const Routes = {
   },
   Tokens: {
     root: '/tokens',
-    byReference: (referenceNumber: string) => `/tokens/${referenceNumber}`
+    byReference: (referenceNumber: string) => `/tokens/${referenceNumber}`,
+    rootRev2: '/tokens/rev2',
+    byReferenceRev2: (referenceNumber: string) => `/tokens/rev2/${encodeURIComponent(referenceNumber)}`,
+    approve: (referenceNumber: string) => `/tokens/${encodeURIComponent(referenceNumber)}/approve`
   },
   Certificates: {
     limits: '/certificates/limits',

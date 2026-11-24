@@ -1,8 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { HttpClient, type HttpRequestOptions, type HttpResponse } from '../../src/utils/http.js';
-import { AuthenticationError } from '../../src/types/common.js';
+import { AuthenticationError, KsefApiError } from '../../src/types/common.js';
+import { RateLimitError } from '../../src/types/limits.js';
 import type { AuthManager } from '../../src/api2/auth-manager.js';
 import type { HttpClientOptions } from '../../src/types/config.js';
+import { AuthenticationV2Service } from '../../src/api2/services/authentication.js';
+import { AuthSessionService } from '../../src/api2/services/auth-sessions.js';
+import { TokenService } from '../../src/api2/services/token.js';
 
 function createStubAuthManager(overrides: Partial<AuthManager> = {}): AuthManager {
   let accessToken = 'managed-access-token';
@@ -34,6 +38,54 @@ class TestHttpClient extends HttpClient {
     return await this.run(requestOptions) as HttpResponse<T>;
   }
 }
+
+describe('HttpClient rate-limit retries', () => {
+  const serverLimit = Object.assign(
+    new KsefApiError('Too many requests', { statusCode: 429 }),
+    { headers: { 'retry-after': '60' } }
+  );
+  const url = 'https://example.com/tokens/rev2';
+
+  it.each([
+    ['server 429', serverLimit],
+    ['local rate limit', new RateLimitError('Limit exceeded', 60_000)]
+  ])('propagates %s immediately when retries are disabled', async (_source, error) => {
+    vi.useFakeTimers();
+    try {
+      const run = vi.fn().mockRejectedValue(error);
+      const rejected = vi.fn();
+      const client = new TestHttpClient(run);
+      void client.request({ method: 'POST', url, maxRetries: 0 }).catch(rejected);
+
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(rejected).toHaveBeenCalledWith(error);
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('honors Retry-After while another attempt is available', async () => {
+    vi.useFakeTimers();
+    try {
+      const response = { status: 200, statusText: 'OK', headers: {}, data: {} };
+      const run = vi.fn().mockRejectedValueOnce(serverLimit).mockResolvedValueOnce(response);
+      const client = new TestHttpClient(run);
+      const result = client.request({ method: 'GET', url, maxRetries: 1 });
+
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(run).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+
+      await expect(result).resolves.toEqual(response);
+      expect(run).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
 
 describe('HttpClient AuthManager integration', () => {
   it('injects managed access token when Authorization header is absent', async () => {
@@ -83,6 +135,22 @@ describe('HttpClient AuthManager integration', () => {
     expect(run.mock.calls[1]?.[0].headers?.Authorization).toBe('Bearer refreshed-access-token');
   });
 
+  it('does not refresh if a 401 arrives on the final attempt', async () => {
+    const onUnauthorized = vi.fn(async () => 'refreshed-access-token');
+    const error = new AuthenticationError('Expired', { statusCode: 401 });
+    const run = vi.fn().mockRejectedValue(error);
+    const client = new TestHttpClient(run, { authManager: createStubAuthManager({ onUnauthorized }) });
+
+    await expect(client.request({
+      method: 'GET',
+      url: 'https://example.com/secure',
+      maxRetries: 0
+    })).rejects.toBe(error);
+
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it('does not trigger refresh when skipAuthRetry is true', async () => {
     const onUnauthorized = vi.fn(async () => 'refreshed-access-token');
     const authManager = createStubAuthManager({ onUnauthorized });
@@ -99,6 +167,53 @@ describe('HttpClient AuthManager integration', () => {
     })).rejects.toBeInstanceOf(AuthenticationError);
 
     expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('rev2 operations through HttpClient', () => {
+  const credential = 'caller-credential';
+  const readAuth = (http: HttpClient) =>
+    new AuthenticationV2Service(http, 'test').getAuthenticationStatusRev2('auth-ref', credential);
+  const issue = (http: HttpClient) =>
+    new TokenService(http, 'test').generateTokenRev2(credential, {
+      permissions: ['InvoiceRead'],
+      description: 'Test integration'
+    });
+  const approve = (http: HttpClient) =>
+    new TokenService(http, 'test').approveToken(credential, 'token-ref');
+
+  it.each([
+    ['/auth/rev2/auth-ref', readAuth],
+    ['/auth/sessions/rev2', (http: HttpClient) => new AuthSessionService(http, 'test').listSessionsRev2(credential)],
+    ['/tokens/rev2', issue],
+    ['/tokens/rev2', (http: HttpClient) => new TokenService(http, 'test').queryTokensRev2(credential)],
+    ['/tokens/rev2/token-ref', (http: HttpClient) => new TokenService(http, 'test').getTokenRev2(credential, 'token-ref')],
+    ['/tokens/token-ref/approve', approve]
+  ] as const)('preserves the caller credential on 401 from %s', async (path, call) => {
+    const onUnauthorized = vi.fn(async () => 'other-session-access-token');
+    const error = new AuthenticationError('Expired', { statusCode: 401 });
+    const run = vi.fn().mockRejectedValue(error);
+    const client = new TestHttpClient(run, { authManager: createStubAuthManager({ onUnauthorized }) });
+
+    await expect(call(client)).rejects.toBe(error);
+
+    expect(run).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      url: `https://api-test.ksef.mf.gov.pl/v2${path}`,
+      headers: { Authorization: `Bearer ${credential}` }
+    }));
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['issue', issue, new KsefApiError('Connection lost')],
+    ['approve', approve, new KsefApiError('Server error', { statusCode: 500 })],
+    ['read authentication status', readAuth, new KsefApiError('Gone', { statusCode: 410 })]
+  ] as const)('propagates an error from %s after one attempt', async (_operation, call, error) => {
+    const run = vi.fn().mockRejectedValue(error);
+    const client = new TestHttpClient(run);
+
+    await expect(call(client)).rejects.toBe(error);
     expect(run).toHaveBeenCalledTimes(1);
   });
 });

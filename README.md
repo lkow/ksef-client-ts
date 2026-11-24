@@ -186,6 +186,24 @@ nor payment settlement. Use the paginated `queryInvoices` API to check invoice m
 - `client.tokens`: wraps `/tokens` CRUD so you can generate, page through, or revoke authentication tokens; statuses mirror `tokeny-ksef.md`.
 - Use `KsefApiV2.AuthSessionService` directly when you need to list or revoke `/auth/sessions` entries (`auth/sesje.md` contract).
 
+KSeF 2.10.0 adds opt-in methods available on TE (`environment: 'test'`) during the rollout.
+Existing methods retain their original endpoints. Use the new methods once your target environment supports them.
+
+- `client.authentication.getAuthenticationStatusRev2` and `AuthSessionService.listSessionsRev2` return the structured `authenticationMethodInfo`.
+- `client.tokens.generateTokenRev2`, `queryTokensRev2`, and `getTokenRev2` support validity dates and structured token metadata.
+- A rev2 token issued from a token-authenticated session enters `AwaitingApproval` and has
+  24 hours to be approved before it becomes `ApprovalExpired`. Call
+  `client.tokens.approveToken(accessToken, referenceNumber)` from a session authenticated via
+  XAdES or Węzeł Krajowy. Approval from a token-authenticated session returns KSeF error `26005`.
+  KSeF permits approval by a context owner, a caller with `CredentialsManage`, or the token author
+  with all its requested permissions. Use the new token to authenticate once `getTokenRev2`
+  reports `status.code === 'Active'`.
+
+Use the rev2 status methods for tokens issued via rev2. On KSeF 2.10.0, the original methods report
+`AwaitingApproval` and `NotYetActive` as `Active`, and `ApprovalExpired` and `Expired` as `Revoked`.
+The rev2 methods use the credential passed by the caller. After a 401, refresh or reauthenticate the same session explicitly.
+Use `CollectiveIdentifierManage` in EU entity grants on environments running KSeF 2.10.0 or later.
+
 ## Rate limits
 
 Use `client.rateLimits.getEffectiveLimits(accessToken)` to fetch the current quotas advertised by `/api/v2/rate-limits` (same numbers as `limity/limity-api.md`). Helpers exported from `@ksef/client` convert those values into the `RateLimitConfig` shape consumed by the HTTP client.

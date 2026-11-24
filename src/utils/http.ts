@@ -88,7 +88,8 @@ export class HttpClient {
           error instanceof AuthenticationError &&
           this.authManager &&
           !currentOptions.skipAuthRetry &&
-          !authRetryAttempted
+          !authRetryAttempted &&
+          attempt < maxRetries
         ) {
           authRetryAttempted = true;
           const refreshedAccessToken = await this.authManager.onUnauthorized();
@@ -106,6 +107,7 @@ export class HttpClient {
         
         // Handle rate limit errors from rate limiter
         if (this.isRateLimitError(error)) {
+          if (attempt === maxRetries) throw lastError;
           const rateLimitError = error as RateLimitError;
           await this.sleep(rateLimitError.retryAfterMs);
           continue; // Retry immediately after waiting
@@ -118,6 +120,7 @@ export class HttpClient {
 
         // Handle 429 errors from server with Retry-After
         if (error instanceof KsefApiError && error.statusCode === 429) {
+          if (attempt === maxRetries) throw error;
           const retryAfter = this.parseRetryAfter(error) || (currentOptions.retryDelay ?? this.options.retryDelay) * Math.pow(2, attempt);
           await this.sleep(retryAfter);
           continue; // Retry after waiting

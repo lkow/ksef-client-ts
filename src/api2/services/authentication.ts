@@ -10,6 +10,7 @@ import {
   type AuthorizationPolicy,
   type AuthenticationInitResponse,
   type AuthenticationOperationStatusResponse,
+  type AuthenticationOperationStatusResponseRev2,
   type AuthenticationTokenRedeemResponse,
   type AuthenticationTokenRefreshResponse
 } from '../types/common.js';
@@ -162,6 +163,22 @@ export class AuthenticationV2Service {
       headers: {
         'Authorization': `Bearer ${authenticationToken}`
       }
+    });
+    return response.data;
+  }
+
+  /** Reads authentication status on environments that support rev2. */
+  async getAuthenticationStatusRev2(
+    referenceNumber: string,
+    authenticationToken: string
+  ): Promise<AuthenticationOperationStatusResponseRev2> {
+    const response = await this.httpClient.request<AuthenticationOperationStatusResponseRev2>({
+      method: 'GET',
+      url: `${this.baseUrl}${Routes.Auth.statusRev2(referenceNumber)}`,
+      headers: {
+        'Authorization': `Bearer ${authenticationToken}`
+      },
+      skipAuthRetry: true
     });
     return response.data;
   }
